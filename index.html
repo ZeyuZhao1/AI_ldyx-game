@@ -19,8 +19,11 @@
   .wbtn.dis { opacity:.35; cursor:not-allowed; }
   .wbtn:hover:not(.dis) { filter:brightness(1.25); }
   .overlay { position:absolute; inset:0; background:rgba(5,8,20,.92); display:flex;
-             flex-direction:column; align-items:center; justify-content:center;
-             text-align:center; padding:24px; z-index:10; }
+             flex-direction:column; align-items:center; justify-content:flex-start;
+             text-align:center; padding:24px; z-index:10;
+             overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  #menu,#modal { position:fixed; }   /* 手机上画布很矮：菜单/弹窗铺满全屏并可滑动翻页 */
+  .overlay>div { margin-top:auto; margin-bottom:auto; }   /* 内容矮时居中，超高时可从顶部滚动 */
   .hidden { display:none !important; }
   h1 { font-size:40px; letter-spacing:8px; color:#f0c869; text-shadow:0 0 18px rgba(240,200,105,.4); }
   .sub { margin-top:8px; color:#9aa3c7; font-size:14px; letter-spacing:2px; }
@@ -80,7 +83,7 @@
   </div>
   <canvas id="cv" width="960" height="540"></canvas>
   <div id="toast" class="hidden"></div>
-  <div id="ver">build v15</div>
+  <div id="ver">build v16</div>
 
   <!-- 首页 + 子页面 -->
   <div class="overlay" id="menu">
@@ -93,7 +96,8 @@
         <button class="hbtn" id="btnSci">科学家图鉴</button>
         <button class="hbtn" id="btnSet">设置</button>
       </div>
-      <div class="tip">操作：画面任意位置按住，向左下拖拽拉弓，松开发射 ｜ 飞行中按【空格】（手机：再点一下屏幕）= 钱学森弹道 / 二级点火 ｜ 通关主线后解锁【无尽挑战】</div>
+      <div class="tip">操作：画面任意位置按住，向左下拖拽拉弓，松开发射 ｜ 飞行中按【空格】= 钱学森弹道 / 二级点火 ｜ 通关主线后解锁【无尽挑战】</div>
+      <div class="tip" style="margin-top:8px;color:#556">本作品为思政课教学演示小游戏，内容基于公开史实改编，仅用于学习交流</div>
     </div>
     <!-- 关卡地图 -->
     <div id="viewLevels" class="hidden">
