@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>两弹一星汇报用小游戏</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; user-select:none; }
+  body { background:#0b1026; color:#e8e6df; font-family:"Microsoft YaHei","PingFang SC",sans-serif;
+         display:flex; flex-direction:column; align-items:center; min-height:100vh; }
+  #wrap { position:relative; width:960px; max-width:100vw; }
+  canvas { display:block; width:100%; background:#000; cursor:crosshair; touch-action:none; }
+  #hud { display:flex; justify-content:space-between; align-items:center;
+         padding:6px 12px; background:#141a35; font-size:14px; gap:8px; flex-wrap:wrap; }
+  #hud .group { display:flex; align-items:center; gap:6px; }
+  .wbtn { padding:3px 10px; border:1px solid #555; border-radius:4px; background:#1d2447;
+          color:#ccc; cursor:pointer; font-size:13px; }
+  .wbtn.sel { background:#8a2b2b; color:#fff; border-color:#d66; }
+  .wbtn.dis { opacity:.35; cursor:not-allowed; }
+  .wbtn:hover:not(.dis) { filter:brightness(1.25); }
+  .overlay { position:absolute; inset:0; background:rgba(5,8,20,.92); display:flex;
+             flex-direction:column; align-items:center; justify-content:center;
+             text-align:center; padding:24px; z-index:10; }
+  .hidden { display:none !important; }
+  h1 { font-size:40px; letter-spacing:8px; color:#f0c869; text-shadow:0 0 18px rgba(240,200,105,.4); }
+  .sub { margin-top:8px; color:#9aa3c7; font-size:14px; letter-spacing:2px; }
+  #levelGrid { display:flex; gap:12px; margin:26px 0 10px; flex-wrap:wrap; justify-content:center; }
+  .lv { width:120px; padding:12px 6px; border:1px solid #3a4570; border-radius:8px;
+        background:#161d3d; cursor:pointer; transition:.15s; }
+  .lv:hover:not(.lock) { border-color:#f0c869; transform:translateY(-3px); }
+  .lv .yr { font-size:20px; color:#f0c869; font-weight:bold; }
+  .lv .nm { font-size:12px; margin-top:6px; color:#cfd4ea; }
+  .lv.lock { opacity:.35; cursor:not-allowed; }
+  .lv.done .yr::after { content:" ✓"; color:#7dd87d; }
+  #sciRow { display:flex; gap:10px; margin-top:18px; flex-wrap:wrap; justify-content:center; }
+  .sci { width:160px; padding:10px; border:1px solid #3a4570; border-radius:8px;
+         background:#11173a; font-size:12px; }
+  .sci .sname { font-size:15px; color:#f0c869; margin-bottom:4px; }
+  .sci.locked { filter:grayscale(1); opacity:.45; }
+  .sci.locked .sname { color:#889; }
+  .modalBox { background:#161d3d; border:1px solid #4a5578; border-radius:12px;
+              padding:28px 36px; max-width:560px; }
+  .modalBox h2 { color:#f0c869; margin-bottom:12px; font-size:26px; }
+  .modalBox p { color:#cfd4ea; line-height:1.8; font-size:15px; margin-bottom:8px; }
+  .modalBox .quote { color:#9fd08a; font-style:italic; }
+  .mbtn { margin-top:16px; padding:8px 28px; font-size:16px; background:#8a2b2b; color:#fff;
+          border:1px solid #d66; border-radius:6px; cursor:pointer; }
+  .mbtn.ghost { background:transparent; border-color:#556; color:#aab; margin-left:10px; }
+  .mbtn:hover { filter:brightness(1.2); }
+  #toast { position:absolute; top:70px; left:50%; transform:translateX(-50%);
+           background:rgba(20,26,53,.95); border:1px solid #f0c869; color:#f0c869;
+           padding:8px 20px; border-radius:20px; font-size:14px; z-index:20;
+           pointer-events:none; transition:opacity .3s; }
+  .tip { margin-top:14px; color:#667; font-size:12px; }
+  #ver { position:absolute; right:10px; bottom:6px; color:#445; font-size:11px; z-index:5; }
+  /* 首页 */
+  #homeBtns { display:flex; flex-direction:column; gap:16px; margin-top:44px; align-items:center; }
+  .hbtn { display:block; margin-left:auto; margin-right:auto; }
+  .hbtn { width:260px; padding:14px 0; font-size:20px; letter-spacing:6px; color:#e8e6df;
+          background:#1d2447; border:1px solid #4a5578; border-radius:10px; cursor:pointer;
+          transition:.15s; }
+  .hbtn:hover { border-color:#f0c869; color:#f0c869; transform:translateY(-2px); }
+  .hbtn.danger { border-color:#8a2b2b; color:#ff9b9b; }
+  .hbtn.danger:hover { background:#8a2b2b; color:#fff; border-color:#d66; }
+  .vtitle { color:#f0c869; font-size:26px; letter-spacing:6px; margin-bottom:20px; }
+  .backBtn { margin-top:24px; }
+  .sci .quote { color:#9fd08a; font-style:italic; margin:6px 0; font-size:11px; }
+  #setBox { display:flex; flex-direction:column; align-items:center; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="hud">
+    <div class="group"><span id="hudLevel">—</span><span id="hudWind" style="color:#9aa3c7"></span></div>
+    <div class="group" id="warheads"></div>
+    <div class="group"><span id="hudShots"></span>
+      <button class="wbtn hidden" id="btnSite">阵地：陆基</button>
+      <button class="wbtn" id="btnRestart">重开本关</button>
+      <button class="wbtn" id="btnMenu">返回首页</button></div>
+  </div>
+  <canvas id="cv" width="960" height="540"></canvas>
+  <div id="toast" class="hidden"></div>
+  <div id="ver">build v14</div>
+
+  <!-- 首页 + 子页面 -->
+  <div class="overlay" id="menu">
+    <!-- 首页 -->
+    <div id="viewHome">
+      <h1>两弹一星</h1>
+      <div class="sub">戈壁砺剑 · 星辰为证 —— 思政课汇报用小游戏 DEMO</div>
+      <div id="homeBtns">
+        <button class="hbtn" id="btnPlay">开始闯关</button>
+        <button class="hbtn" id="btnSci">科学家图鉴</button>
+        <button class="hbtn" id="btnSet">设置</button>
+      </div>
+      <div class="tip">操作：画面任意位置按住，向左下拖拽拉弓，松开发射 ｜ 飞行中按【空格】= 钱学森弹道 / 二级点火 ｜ 通关主线后解锁【无尽挑战】</div>
+    </div>
+    <!-- 关卡地图 -->
+    <div id="viewLevels" class="hidden">
+      <div class="vtitle">选择关卡</div>
+      <div id="levelGrid"></div>
+      <button class="mbtn ghost backBtn" data-back>返回首页</button>
+    </div>
+    <!-- 角色图鉴 -->
+    <div id="viewSci" class="hidden">
+      <div class="vtitle">科学家图鉴</div>
+      <div id="sciRow"></div>
+      <div class="tip">每归队一位科学家，发射架最大力度提升；科学家们还会带来新弹药、新能力与瞄准镜</div>
+      <button class="mbtn ghost backBtn" data-back>返回首页</button>
+    </div>
+    <!-- 设置 -->
+    <div id="viewSet" class="hidden">
+      <div class="vtitle">设置</div>
+      <div id="setBox">
+        <button class="hbtn danger" id="btnReset">重置游戏数据</button>
+        <div class="tip">将清空闯关进度与已归队的科学家，不可恢复</div>
+      </div>
+      <button class="mbtn ghost backBtn" data-back>返回首页</button>
+    </div>
+  </div>
+
+  <!-- 关卡开场 / 结算 / 科学家解锁 弹窗 -->
+  <div class="overlay hidden" id="modal">
+    <div class="modalBox" id="modalBox"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ================= 基础 ================= */
+const W=960,H=540,GROUND=482,G=620;
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+const $=id=>document.getElementById(id);
+
+/* ================= 科学家 ================= */
+const SCIENTISTS=[
+ {id:'qian',name:'钱学森',after:1,title:'导弹之父',unlock:'钱学森弹道',
+  quote:'“外国人能搞的，难道中国人不能搞？”',
+  desc:'【钱学森弹道】飞行中按空格/点击，导弹进入滑翔段：弹道压平、射程大增。'},
+ {id:'enrich',name:'王承书',after:2,title:'铀浓缩专家',unlock:'核爆半径提升',
+  quote:'“我愿意。”——三次掷地有声的回答，隐姓埋名三十年。',
+  desc:'【气体扩散】主持建成铀浓缩厂：核爆类弹药（原子弹/氢弹/核装置）爆炸半径提升30%。'},
+ {id:'deng',name:'邓稼先',after:4,title:'两弹元勋',unlock:'定点试爆',
+  quote:'“我不爱武器，我爱和平，但为了和平，我们需要武器。”',
+  desc:'【定点试爆】可在场地部署核装置并随时起爆，造成大范围爆炸。'},
+ {id:'guo',name:'郭永怀',after:5,title:'力学奠基人',unlock:'数据护盾+力度大增',pow:45,
+  quote:'他用身体护住绝密资料，直至生命最后一刻。',
+  desc:'【数据护盾】每关第一次脱靶（未摧毁任何目标），返还该枚弹药。【倾力】发射架最大力度大幅提升。'},
+ {id:'yu',name:'于敏',after:8,title:'氢弹之父',unlock:'氢弹',
+  quote:'“一个人的名字，早晚是要没有的，能把微薄的力量融进祖国的强盛之中，便足以自慰了。”',
+  desc:'【于敏构型·氢弹】超大范围爆炸，毁天灭地，每关限量。'},
+ {id:'bunker',name:'程开甲',after:9,title:'核试验司令',unlock:'钻地弹',
+  quote:'“我这辈子最大的幸福，就是自己所做的一切都和祖国紧紧地联系在一起。”',
+  desc:'【钻地弹】主持首次地下核试验：新弹药可连续贯穿2个掩体后爆炸，专克深埋目标。'},
+ {id:'sun',name:'孙家栋',after:10,title:'卫星之父',unlock:'瞄准镜',
+  quote:'“国家需要，我就去做。”',
+  desc:'【轨道计算】解锁瞄准镜：发射前可见完整弹道预览。'},
+ {id:'stage2',name:'屠守锷',after:12,title:'洲际导弹总师',unlock:'二级点火+力度大增',pow:35,
+  quote:'“国家交给的任务，就一定要完成。”',
+  desc:'【二级点火】滑翔段中再按空格：第二级发动机启动，导弹再次加速爬升。【增程】发射架最大力度大幅提升。'},
+ {id:'sub',name:'黄纬禄',after:14,title:'巨浪一号总师',unlock:'潜射阵地',
+  quote:'“有问题共同商量，有困难共同克服，有余量共同掌握，有风险共同承担。”',
+  desc:'【水下点火】解锁潜射阵地：HUD可切换阵地，潜艇位于目标中间，可向左右两个方向发射，但出水初速较低（力度-28%）。'},
+];
+
+/* ================= 关卡 ================= */
+/* block: [x,y,w,h,type]  type: concrete(hp1) steel(hp2) core(目标,hp1) */
+const LEVELS=[
+ {year:'1960.11',name:'东风一号',wind:0,
+  intro:'1960年11月5日，中国第一枚近程导弹“东风一号”发射成功。<br>进入关卡后请先观看一段操作演示，随后摧毁全部<span style="color:#ff7b7b">红色核心目标</span>。',
+  fact:'“东风一号”是苏联P-2导弹的仿制型号，但它点燃了中国导弹事业的第一把火。',
+  warheads:{normal:4,atomic:0,hydro:0,deploy:0},
+  blocks:[[430,442,90,40,'concrete'],[450,402,50,40,'concrete'],[460,362,40,40,'core'],
+          [540,442,20,40,'concrete'],[600,442,20,40,'concrete'],[560,442,40,40,'core']]},
+ {year:'1964.01',name:'铀浓缩',wind:6,
+  intro:'1964年1月，兰州铀浓缩厂首次产出武器级高浓铀——原子弹终于有了自己的“粮食”。<br>摧毁分离厂房的核心机组。',
+  fact:'铀-235在天然铀中只占0.7%，提纯到90%以上需要数千台气体扩散机级联运转。',
+  warheads:{normal:4,atomic:0,hydro:0,deploy:0},
+  blocks:[[600,442,150,40,'concrete'],[620,402,40,40,'core'],[690,402,40,40,'core'],
+          [600,362,24,40,'concrete'],[726,362,24,40,'concrete'],
+          [820,442,80,40,'steel'],[840,402,40,40,'core']]},
+ {year:'1964.06',name:'东风二号',wind:-10,
+  intro:'1962年3月首飞失败，1964年6月29日，中国人自行设计的东风二号终于试飞成功。<br>目标在<span style="color:#ff9b6b">纵深阵地</span>，远处核心要借助【钱学森弹道】滑翔增程。',
+  fact:'东风二号射程1300公里。钱学森说：“科学试验如果次次都能成功，那又何必试验呢？”',
+  warheads:{normal:3,atomic:0,hydro:0,deploy:0},
+  blocks:[[760,382,30,100,'steel'],[830,442,60,40,'steel'],[845,402,40,40,'core'],
+          [900,402,40,80,'steel'],[900,362,40,40,'core']]},
+ {year:'1964.10',name:'罗布泊',wind:0,
+  intro:'1964年10月16日15时，罗布泊，中国第一颗原子弹在102米高的铁塔上起爆。<br>本关新增<span style="color:#ff9b4d">定点试爆</span>：点击【部署核装置】把它架到目标旁，再按【起爆】。',
+  fact:'原子弹代号“596”——记住1959年6月苏联拒绝提供援助的那个月。',
+  warheads:{normal:2,atomic:0,hydro:0,deploy:1},
+  blocks:[[630,442,170,40,'steel'],[660,402,40,40,'core'],[740,402,40,40,'core'],
+          [630,362,26,40,'steel'],[774,362,26,40,'steel'],
+          [850,392,26,90,'steel'],[890,432,50,50,'core']]},
+ {year:'1965.05',name:'空投核弹',wind:8,
+  intro:'1965年5月14日，第二颗原子弹由轰炸机空投成功——核武器走向“武器化”。<br>三处分散目标，规划好核装置的部署位置。',
+  fact:'这次空投试验标志着中国的原子弹真正具备了实战价值。',
+  warheads:{normal:2,atomic:0,hydro:0,deploy:1},
+  blocks:[[560,442,70,40,'concrete'],[575,402,40,40,'core'],
+          [700,442,70,40,'steel'],[715,402,40,40,'core'],
+          [840,442,70,40,'steel'],[855,402,40,40,'core']]},
+ {year:'1966.10',name:'两弹结合',wind:12,milestoneId:'atomic',
+  intro:'1966年10月27日，东风二号甲携带核弹头实爆成功——原子弹第一次被装上导弹。<br>从此【原子弹弹头】加入武器库：命中即爆，机动灵活。',
+  fact:'“两弹结合”由本土发射、本土落爆，在世界核试验史上绝无仅有。',
+  milestone:'【原子弹弹头】已解锁：与定点试爆不同，它可以随导弹精确投送。',
+  warheads:{normal:1,atomic:2,hydro:0,deploy:0},
+  blocks:[[700,340,44,142,'steel'],[700,258,44,82,'steel'],[702,218,40,40,'core'],
+          [580,442,56,40,'concrete'],[600,402,40,40,'core'],
+          [830,442,80,40,'steel'],[852,402,40,40,'core']]},
+ {year:'1966.12',name:'氢弹原理试验',wind:-14,
+  intro:'1966年12月28日，氢弹原理试验成功——“于敏构型”得到验证。<br>组合拳：核装置压制一侧，原子弹弹头点杀另一侧。',
+  fact:'这次试验确认了中国完全独立自主的氢弹技术路线。',
+  warheads:{normal:1,atomic:1,hydro:0,deploy:1},
+  blocks:[[600,442,120,40,'steel'],[615,402,40,40,'core'],[665,402,40,40,'core'],
+          [790,442,120,40,'steel'],[805,402,40,40,'core'],[855,402,40,40,'core']]},
+ {year:'1967.06',name:'氢弹',wind:-16,
+  intro:'1967年6月17日，第一颗氢弹空爆成功，330万吨当量。<br>动用<span style="color:#ffb3ff">于敏构型·氢弹</span>，一次清场。',
+  fact:'从原子弹到氢弹，美国用了7年3个月，中国只用了2年8个月。',
+  warheads:{normal:1,atomic:1,hydro:1,deploy:0},
+  blocks:[[560,442,70,40,'concrete'],[575,402,40,40,'core'],
+          [680,442,70,40,'steel'],[695,402,40,40,'core'],
+          [800,442,70,40,'concrete'],[815,402,40,40,'core'],
+          [890,442,60,40,'steel'],[898,402,40,40,'core']]},
+ {year:'1969.09',name:'地下核试验',wind:-8,
+  intro:'1969年9月23日，中国首次地下核试验成功——把惊雷藏进大地深处。<br>目标躲在<span style="color:#c9a86a">双层钢壁</span>之后：新弹药【钻地弹】可连续贯穿2个掩体后爆炸。',
+  fact:'地下核试验把核爆封闭在深山竖井之中，既安全保密，又能获取更精确的测量数据。',
+  warheads:{normal:1,atomic:0,hydro:0,bunker:3,deploy:0},
+  blocks:[[680,442,24,40,'steel'],[704,442,24,40,'steel'],[740,442,40,40,'core'],
+          [830,442,24,40,'steel'],[854,442,24,40,'steel'],[890,442,40,40,'core'],
+          [700,402,40,40,'concrete'],[700,362,40,40,'core'],[748,402,24,80,'steel']]},
+ {year:'1970.04',name:'东方红',wind:18,orbit:{x:730,y:150,r:46},
+  intro:'1970年4月24日，“东方红一号”升空，《东方红》响彻太空。<br>让导弹<span style="color:#8be0ff">穿过轨道窗口</span>！本关仍无瞄准镜——这一关之后，孙家栋会为你带来它。',
+  fact:'“东方红一号”重173公斤，超过苏美首颗卫星重量之和。',
+  warheads:{normal:3,atomic:0,hydro:0,deploy:0},
+  blocks:[[600,300,40,182,'steel'],[820,250,40,232,'steel'],
+          [520,442,60,40,'concrete'],[700,442,60,40,'concrete']]},
+ {year:'1975.11',name:'返回式卫星',wind:10,
+  intro:'1975年11月26日，返回式遥感卫星发射成功并按预定计划回收——中国成为世界上第三个掌握卫星回收技术的国家。<br>瞄准镜已就位：精确摧毁三处回收信标。',
+  fact:'卫星在轨运行3天后，返回舱带着拍摄资料准确落入贵州预定回收区。',
+  warheads:{normal:3,atomic:0,hydro:0,deploy:0},
+  blocks:[[600,442,40,40,'concrete'],[600,402,40,40,'core'],
+          [736,402,24,80,'steel'],[728,362,40,40,'core'],
+          [880,442,60,40,'steel'],[890,402,40,40,'core']]},
+ {year:'1980.05',name:'东风五号',wind:20,
+  intro:'1980年5月18日，东风五号洲际导弹全程飞行试验成功，飞跃9000公里命中南太平洋预定海域。<br>目标在<span style="color:#ff9b6b">极远纵深</span>：先【钱学森弹道】滑翔，再按一次空格<span style="color:#ffb366">【二级点火】</span>！',
+  fact:'打捞数据舱只用了5分20秒。这一刻，中国的核威慑真正覆盖了洲际距离。',
+  warheads:{normal:3,atomic:1,hydro:0,deploy:0},
+  blocks:[[760,322,30,160,'steel'],[840,442,44,40,'concrete'],[842,402,40,40,'core'],
+          [898,382,36,100,'steel'],[896,342,40,40,'core']]},
+ {year:'1981.09',name:'一箭三星',wind:-12,
+  intro:'1981年9月20日，“风暴一号”一箭三星发射成功——一枚火箭将三颗卫星同时送入太空。<br>三处目标分散布防，用瞄准镜逐一点名。',
+  fact:'一箭三星标志着中国掌握了多星分离与分配器技术，航天发射进入新阶段。',
+  warheads:{normal:2,atomic:1,hydro:0,bunker:1,deploy:0},
+  blocks:[[580,442,70,40,'concrete'],[595,402,40,40,'core'],
+          [720,442,24,40,'steel'],[744,442,24,40,'steel'],[780,442,40,40,'core'],
+          [870,402,40,80,'steel'],[870,362,40,40,'core']]},
+ {year:'1982.10',name:'巨浪一号',wind:-16,
+  intro:'1982年10月12日，巨浪一号潜地导弹水下发射成功——共和国拥有了可靠的第二次核打击力量。<br>解锁<span style="color:#7ec8e3">【潜射阵地】</span>：点击HUD【阵地】按钮切换，潜艇悄然抵近目标中间，可向<span style="color:#7ec8e3">左右两个方向</span>出水点火！但<span style="color:#7ec8e3">出水初速较低（力度-28%）</span>，适合近距离精准打击。',
+  fact:'导弹从水下数十米点火出水，攻克了水下点火、出水控制等一系列世界级难题。',
+  warheads:{normal:2,atomic:1,hydro:0,bunker:1,deploy:0},
+  blocks:[[500,442,60,40,'concrete'],[512,402,40,40,'core'],
+          [720,362,24,120,'steel'],[770,442,60,40,'steel'],[782,402,40,40,'core'],
+          [880,442,60,40,'concrete'],[892,402,40,40,'core']]},
+];
+
+const WARHEAD_INFO={
+ normal:{name:'常规',r:62,dmg:2,color:'#d8d8d8'},
+ atomic:{name:'原子弹',r:135,dmg:2,color:'#ffd27b'},
+ hydro:{name:'氢弹',r:290,dmg:3,color:'#ffb3ff'},
+ bunker:{name:'钻地弹',r:95,dmg:3,color:'#c9a86a'},
+ deploy:{name:'核装置',r:235,dmg:3,color:'#ff9b4d'},
+};
+const LAUNCH={x:95,y:GROUND-50};
+const SUB={x:640,y:GROUND-8};      // 潜射阵地：位于目标中间，可双向发射
+const RAIL={len:46,gap:14,defAng:-0.7}; // 导轨：两根杠，绕中心旋转
+
+/* ================= 状态 ================= */
+let progress=parseInt(localStorage.getItem('ldxy_progress')||'0'); // 已解锁到第几关(0起)
+let unlockedSCI=(localStorage.getItem('ldxy_sci')||'').split(',').filter(Boolean);
+let state='menu';      // menu | intro | play | result
+let lv=null,lvIdx=0;
+let blocks=[],particles=[],missile=null;
+let warheads={},selWarhead='normal';
+let aiming=false,aimStart=null,aimPt=null;
+let glideUsed=false,glideT=0,shieldUsed=false,shakeT=0,shakeM=0;
+let destroyedThisShot=0,flightT=0,firedType='normal';
+let stage2Used=false,useSub=false;            // 二级点火 / 潜射阵地
+let endless=false,wave=0,score=0;             // 无尽挑战
+let rewardText='';      // 本关顶部标识：通关后解锁什么
+let demo=null;         // 第一关操作演示
+let deployMode=false,devices=[];   // 定点试爆：部署模式 + 已架设的核装置
+
+function hasSCI(id){return unlockedSCI.includes(id);}
+function save(){localStorage.setItem('ldxy_progress',progress);localStorage.setItem('ldxy_sci',unlockedSCI.join(','));}
+
+/* ================= 菜单 ================= */
+function showView(name){
+  for(const v of ['viewHome','viewLevels','viewSci','viewSet'])$(v).classList.add('hidden');
+  $(name).classList.remove('hidden');
+}
+function renderMenu(){
+  state='menu';$('menu').classList.remove('hidden');$('modal').classList.add('hidden');
+  showView('viewHome');
+  renderLevelGrid();renderSciRow();
+}
+function renderLevelGrid(){
+  const g=$('levelGrid');g.innerHTML='';
+  LEVELS.forEach((L,i)=>{
+    const d=document.createElement('div');
+    const locked=i>progress;
+    d.className='lv'+(locked?' lock':'')+(i<progress?' done':'');
+    d.innerHTML=`<div class="yr">${L.year}</div><div class="nm">${locked?'？？？':L.name}</div>`;
+    if(!locked)d.onclick=()=>showIntro(i);
+    g.appendChild(d);
+  });
+  if(progress>=LEVELS.length){                 // 主线通关后：无尽挑战
+    const d=document.createElement('div');
+    d.className='lv';
+    d.style.borderColor='#f0c869';
+    d.innerHTML=`<div class="yr">∞</div><div class="nm">无尽挑战</div>`;
+    d.onclick=startEndless;
+    g.appendChild(d);
+  }
+}
+function renderSciRow(){
+  const s=$('sciRow');s.innerHTML='';
+  SCIENTISTS.forEach(sc=>{
+    const has=hasSCI(sc.id);
+    const d=document.createElement('div');
+    d.className='sci'+(has?'':' locked');
+    d.innerHTML=has?`<div class="sname">${sc.name} · ${sc.title}</div><div class="quote">${sc.quote}</div><div>${sc.desc}</div>`
+                   :`<div class="sname">？？？</div><div>隐姓埋名，干惊天动地事……</div>`;
+    s.appendChild(d);
+  });
+}
+function resetData(){
+  if(!confirm('确定要重置游戏数据吗？\n闯关进度与已归队的科学家将被清空，不可恢复。'))return;
+  localStorage.removeItem('ldxy_progress');
+  localStorage.removeItem('ldxy_sci');
+  progress=0;unlockedSCI=[];
+  renderLevelGrid();renderSciRow();
+  toast('游戏数据已重置');
+}
+$('btnPlay').onclick=()=>showView('viewLevels');
+$('btnSci').onclick=()=>{renderSciRow();showView('viewSci');};
+$('btnSet').onclick=()=>showView('viewSet');
+$('btnReset').onclick=resetData;
+document.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>showView('viewHome'));
+
+function showIntro(i){
+  lvIdx=i;lv=LEVELS[i];
+  state='intro';$('menu').classList.add('hidden');
+  const scope=hasSCI('sun')?'瞄准镜已解锁，弹道可见':'瞄准镜未解锁——送卫星上天后获得';
+  showModal(`<h2>${lv.year} · ${lv.name}</h2><p>${lv.intro}</p>
+    <p style="color:#667;font-size:13px">${scope}</p>
+    <button class="mbtn" onclick="startLevel()">开始试验</button>
+    <button class="mbtn ghost" onclick="renderMenu();showView('viewLevels')">返回</button>`);
+}
+
+function showModal(html){$('modalBox').innerHTML=html;$('modal').classList.remove('hidden');}
+function hideModal(){$('modal').classList.add('hidden');}
+
+/* ================= 关卡 ================= */
+function startLevel(){
+  hideModal();state='play';
+  endless=false;useSub=false;stage2Used=false;
+  $('btnSite').classList.toggle('hidden',!subAvail());
+  $('btnSite').textContent='阵地：陆基';
+  blocks=lv.blocks.map(b=>({x:b[0],y:b[1],w:b[2],h:b[3],type:b[4],hp:b[4]==='steel'?2:1}));
+  particles=[];missile=null;aiming=false;
+  warheads={...lv.warheads};selWarhead='normal';
+  deployMode=false;devices=[];
+  glideUsed=false;glideT=0;shieldUsed=false;destroyedThisShot=0;
+  demo=(lvIdx===0)?{t:0,flying:false,x:0,y:0,vx:0,vy:0,trail:[]}:null;   // 第一关播放操作演示
+  const rw=SCIENTISTS.find(s=>s.after===lvIdx+1);
+  rewardText=rw?`通关解锁：${rw.name} · ${rw.unlock}`:(lv.milestoneId==='atomic'?'通关解锁：原子弹弹头':'');
+  $('hudLevel').textContent=`${lv.year} · ${lv.name}`;
+  $('hudWind').textContent=lv.wind?`风沙 ${lv.wind>0?'→':'←'} ${Math.abs(lv.wind)>14?'大':'小'}`:'';
+  renderWarheads();updateShots();
+}
+function warheadLocked(k){
+  if(k==='atomic')return !hasSCI('atomic')&&lvIdx<5;   // 两弹结合(第6关)起解锁
+  if(k==='hydro')return !hasSCI('yu')&&lvIdx<7;        // 氢弹关(第8关)起解锁
+  if(k==='bunker')return !hasSCI('bunker')&&lvIdx<8;   // 地下核试验(第9关)起解锁
+  return false;
+}
+function autoSelectWarhead(){
+  if(!warheadLocked(selWarhead)&&(warheads[selWarhead]||0)>0)return;
+  for(const k of ['normal','atomic','hydro','bunker']){
+    if(!warheadLocked(k)&&(warheads[k]||0)>0){
+      if(k!==selWarhead)toast(`「${WARHEAD_INFO[selWarhead].name}」弹药耗尽，自动切换：${WARHEAD_INFO[k].name}`);
+      selWarhead=k;return;
+    }
+  }
+}
+function renderWarheads(){
+  autoSelectWarhead();
+  const w=$('warheads');w.innerHTML='<span style="color:#9aa3c7">弹头:</span>';
+  for(const k of ['normal','atomic','hydro','bunker']){
+    const n=warheads[k]||0;
+    const b=document.createElement('button');
+    const locked=warheadLocked(k);
+    b.className='wbtn'+(selWarhead===k?' sel':'')+(n<=0||locked?' dis':'');
+    b.textContent=`${WARHEAD_INFO[k].name}×${n}`;
+    if(n>0&&!locked)b.onclick=()=>{selWarhead=k;renderWarheads();};
+    w.appendChild(b);
+  }
+  // 定点试爆：部署 + 起爆
+  if((warheads.deploy||0)>0){
+    const locked=!hasSCI('deng')&&lvIdx<3;            // 罗布泊(第4关)起解锁
+    const b=document.createElement('button');
+    b.className='wbtn'+(deployMode?' sel':'')+(locked?' dis':'');
+    b.textContent=`部署核装置×${warheads.deploy}`;
+    if(!locked)b.onclick=()=>{deployMode=!deployMode;renderWarheads();};
+    w.appendChild(b);
+  }
+  if(devices.length>0){
+    const b=document.createElement('button');
+    b.className='wbtn';b.style.borderColor='#f0c869';b.style.color='#f0c869';
+    b.textContent='起爆！';b.onclick=detonateDevices;
+    w.appendChild(b);
+  }
+}
+function totalShots(){return warheads.normal+warheads.atomic+warheads.hydro+(warheads.bunker||0);}
+function updateShots(){$('hudShots').textContent=`剩余弹药 ${totalShots()}`;}
+
+/* ================= 瞄准 & 发射 ================= */
+const BASE_CAP=135,CAP_PER_SCI=6,POWER=4.2;   // 基础力度压低：弹道极限约570px，远目标必须滑翔/二级点火
+function powerCap(){
+  let cap=BASE_CAP+unlockedSCI.length*CAP_PER_SCI;
+  for(const sc of SCIENTISTS)if(sc.pow&&hasSCI(sc.id))cap+=sc.pow;
+  return cap;
+}
+// 能力门控：科学家归队后常驻；在其解锁关当关即可用
+function subAvail(){return hasSCI('sub')||lvIdx>=13;}
+function stage2Avail(){return hasSCI('stage2')||lvIdx>=11;}
+function enrichAvail(){return hasSCI('enrich')||lvIdx>=1;}
+function cvPos(e){const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};}
+cv.addEventListener('mousedown',e=>{
+  if(state!=='play')return;
+  if(demo){demo=null;toast('轮到你了！');return;}   // 点击跳过演示
+  if(deployMode){tryDeploy(cvPos(e));return;}     // 部署模式：点击架设核装置
+  if(missile){tryGlide();return;}
+  if(totalShots()<=0)return;
+  aiming=true;aimStart=cvPos(e);aimPt=aimStart;
+});
+cv.addEventListener('mousemove',e=>{if(aiming)aimPt=cvPos(e);});
+window.addEventListener('mouseup',()=>{
+  if(!aiming)return;aiming=false;
+  const v=aimVec();if(!v)return;
+  fire(v);
+});
+window.addEventListener('keydown',e=>{
+  if(e.code==='Space'){e.preventDefault();if(state==='play'&&missile)tryGlide();}
+});
+// 相对拖拽：在任意位置按下，拉出长度不受屏幕边缘限制
+function curCap(){return powerCap()*(useSub?0.72:1);}   // 潜射出水初速低：力度-28%
+function pullVec(){
+  if(!aimStart||!aimPt)return null;
+  let dx=aimPt.x-aimStart.x,dy=aimPt.y-aimStart.y;
+  const len=Math.hypot(dx,dy),cap=curCap();
+  if(len>cap){dx*=cap/len;dy*=cap/len;}
+  return {dx,dy};
+}
+function aimVec(){
+  const p=pullVec();if(!p)return null;
+  if(useSub?Math.abs(p.dx)<10:-p.dx<10)return null;   // 陆基只能向右打；潜射阵地可双向
+  return {vx:-p.dx*POWER,vy:-p.dy*POWER,power:Math.hypot(p.dx,p.dy)/curCap()};
+}
+function launchPos(){return useSub?SUB:LAUNCH;}
+function fire(v){
+  autoSelectWarhead();
+  if((warheads[selWarhead]||0)<=0)return;
+  warheads[selWarhead]--;
+  firedType=selWarhead;
+  const C=launchPos();
+  missile={x:C.x,y:C.y,vx:v.vx,vy:v.vy,type:selWarhead,trail:[],pen:0};
+  glideUsed=false;glideT=0;stage2Used=false;destroyedThisShot=0;flightT=0;
+  renderWarheads();updateShots();
+}
+function tryGlide(){
+  if(!missile||missile.vx<=0)return;
+  if(!glideUsed){
+    if(!hasSCI('qian'))return;
+    glideUsed=true;glideT=1.5;
+    missile.vy*=0.15;missile.vx=missile.vx*1.25+130;
+    toast('钱学森弹道发动：进入滑翔段！');
+    spawn(missile.x,missile.y,10,'#8be0ff');
+    return;
+  }
+  if(stage2Avail()&&!stage2Used){             // 二级点火：滑翔段中再按空格
+    stage2Used=true;
+    missile.vx=missile.vx*1.3+120;
+    missile.vy=Math.min(missile.vy,0)-170;
+    toast('二级点火！发动机再次启动！');
+    spawn(missile.x,missile.y,14,'#ffb366');
+  }
+}
+
+/* ================= 爆炸 ================= */
+function explode(x,y,type){
+  const info=WARHEAD_INFO[type];
+  const R=(enrichAvail()&&type!=='normal'&&type!=='bunker')?info.r*1.3:info.r; // 铀浓缩：核爆半径+30%
+  shakeM=type==='hydro'?16:(type==='deploy'?12:(type==='atomic'?9:4));shakeT=type==='hydro'?0.7:0.35;
+  for(const b of blocks){
+    const cx=Math.max(b.x,Math.min(x,b.x+b.w)),cy=Math.max(b.y,Math.min(y,b.y+b.h));
+    const d=Math.hypot(cx-x,cy-y);
+    if(d<R){
+      b.hp-=(d<R*0.55?info.dmg:1);
+      if(b.hp<=0){spawn(b.x+b.w/2,b.y+b.h/2,14,b.type==='core'?'#ff6b6b':'#b0a08a');
+        if(b.type==='core'){destroyedThisShot++;if(endless)score++;}}
+    }
+  }
+  blocks=blocks.filter(b=>b.hp>0);
+  spawn(x,y,type==='hydro'?60:(type==='deploy'?44:(type==='atomic'?36:20)),info.color);
+  if(type==='hydro'||type==='deploy')spawn(x,y,40,'#ffffff');
+  // 殉爆：爆炸波及已部署的核装置，连锁起爆
+  const chained=devices.filter(d=>Math.hypot(d.x-x,d.y-y)<R+15);
+  if(chained.length){
+    devices=devices.filter(d=>!chained.includes(d));
+    chained.forEach((d,i)=>setTimeout(()=>{if(state==='play'){explode(d.x,d.y,'deploy');checkEnd();}},180+i*140));
+    renderWarheads();
+  }
+}
+function spawn(x,y,n,color){
+  for(let i=0;i<n;i++){const a=Math.random()*6.283,s=40+Math.random()*220;
+    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-60,life:.5+Math.random()*.6,color,r:2+Math.random()*4});}
+}
+
+/* ================= 主循环 ================= */
+let last=0;
+function loop(t){
+  const dt=Math.min(0.033,(t-last)/1000||0.016);last=t;
+  if(state==='play')update(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+/* 第一关演示：从画面中央按住 → 向左下拖 → 松开发射（不消耗弹药、不造成伤害） */
+const DEMO_PULL={sx:430,sy:250,dx:-100,dy:92};
+/* 简易物理：失去支撑的掩体自然下落 */
+function blockSupported(b){
+  if(b.y+b.h>=GROUND-0.5)return true;
+  return blocks.some(o=>o!==b&&Math.abs(o.y-(b.y+b.h))<=3&&b.x<o.x+o.w&&b.x+b.w>o.x);
+}
+function settleBlocks(dt){
+  blocks.sort((a,b)=>(b.y+b.h)-(a.y+a.h));       // 自下而上结算
+  for(const b of blocks){
+    if(blockSupported(b)){b.vy=0;continue;}
+    b.vy=(b.vy||0)+G*dt;
+    b.y+=b.vy*dt;
+    if(b.y+b.h>=GROUND){b.y=GROUND-b.h;b.vy=0;spawn(b.x+b.w/2,GROUND,5,'#b0a08a');}
+    else{
+      const o=blocks.find(o=>o!==b&&o.y>=b.y+b.h&&b.x<o.x+o.w&&b.x+b.w>o.x);
+      if(o&&b.y+b.h>=o.y){b.y=o.y-b.h;b.vy=0;spawn(b.x+b.w/2,b.y+b.h,5,'#b0a08a');}
+    }
+  }
+}
+function update(dt){
+  // 粒子
+  for(const p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=G*0.6*dt;p.life-=dt;}
+  particles=particles.filter(p=>p.life>0);
+  if(shakeT>0)shakeT-=dt;
+  settleBlocks(dt);
+
+  // 演示流程
+  if(demo){
+    demo.t+=dt;
+    if(!demo.flying&&demo.t>=1.9){          // 松手时刻
+      demo.flying=true;
+      demo.x=LAUNCH.x;demo.y=LAUNCH.y;
+      demo.vx=-DEMO_PULL.dx*POWER;demo.vy=-DEMO_PULL.dy*POWER;
+    }
+    if(demo.flying){
+      demo.vy+=G*dt;demo.x+=demo.vx*dt;demo.y+=demo.vy*dt;
+      demo.trail.push({x:demo.x,y:demo.y});if(demo.trail.length>40)demo.trail.shift();
+      if(demo.y>=GROUND){spawn(demo.x,GROUND,20,'#d8d8d8');demo=null;toast('轮到你了！');}
+    }
+    if(demo&&demo.t>8)demo=null;            // 兜底
+    return;
+  }
+
+  if(missile){
+    const m=missile;flightT+=dt;
+    const g=(glideT>0)?G*0.14:G;
+    if(glideT>0)glideT-=dt;
+    m.vx+=lv.wind*dt;m.vy+=g*dt;
+    m.x+=m.vx*dt;m.y+=m.vy*dt;
+    m.trail.push({x:m.x,y:m.y});if(m.trail.length>40)m.trail.shift();
+    // 轨道窗口（第6关）
+    if(lv.orbit&&Math.hypot(m.x-lv.orbit.x,m.y-lv.orbit.y)<lv.orbit.r){winOrbit();return;}
+    // 撞掩体
+    let hit=null;
+    for(const b of blocks){
+      if(m.x>b.x-4&&m.x<b.x+b.w+4&&m.y>b.y-4&&m.y<b.y+b.h+4){hit=b;break;}
+    }
+    if(hit&&m.type==='bunker'&&m.pen<2){
+      // 钻地弹：贯穿掩体（最多2个），减速后继续飞行
+      spawn(hit.x+hit.w/2,hit.y+hit.h/2,12,hit.type==='core'?'#ff6b6b':'#b0a08a');
+      if(hit.type==='core'){destroyedThisShot++;if(endless)score++;}
+      blocks=blocks.filter(b=>b!==hit);
+      m.pen++;m.vx*=0.82;m.vy*=0.82;
+      spawn(m.x,m.y,6,'#c9a86a');
+    }else if(hit||m.y>=GROUND){explode(m.x,Math.min(m.y,GROUND),m.type);endShot();return;}
+    if(m.x>W+60||m.x<-60||m.y>H+80||flightT>14)endShot();
+  }
+}
+function endShot(){
+  missile=null;
+  if(destroyedThisShot===0&&hasSCI('guo')&&!shieldUsed&&!lv.orbit){
+    shieldUsed=true;warheads[firedType]++; // 数据护盾：返还本次弹种
+    toast('数据护盾发动：郭永怀护住了本次数据，弹药返还！');
+    renderWarheads();updateShots();
+  }
+  checkEnd();
+}
+function checkEnd(){
+  if(state!=='play')return;
+  if(endless){
+    if(coresLeft()===0){waveClear();return;}
+    if(!missile&&totalShots()<=0&&devices.length===0&&(warheads.deploy||0)<=0){
+      const w=wave;setTimeout(()=>{if(endless&&wave===w&&state==='play')endlessOver()},600);  // 防与清波判定的竞态
+    }
+    return;
+  }
+  if(coresLeft()===0&&!lv.orbit){setTimeout(winLevel,500);return;}
+  if(!missile&&totalShots()<=0&&devices.length===0&&(warheads.deploy||0)<=0){
+    const li=lvIdx;setTimeout(()=>{if(lvIdx===li&&state==='play')loseLevel()},600);
+  }
+}
+function coresLeft(){return blocks.filter(b=>b.type==='core').length;}
+
+/* ================= 无尽挑战 ================= */
+function startEndless(){
+  $('menu').classList.add('hidden');hideModal();
+  endless=true;wave=0;score=0;
+  lvIdx=LEVELS.length;                          // 超出主线：全部能力可用
+  lv={year:'∞',name:'无尽挑战',wind:0,orbit:null,blocks:[],warheads:{}};
+  state='play';
+  blocks=[];particles=[];missile=null;aiming=false;
+  warheads={normal:5,atomic:1,hydro:0,bunker:1,deploy:0};selWarhead='normal';
+  deployMode=false;devices=[];
+  glideUsed=false;glideT=0;shieldUsed=false;stage2Used=false;destroyedThisShot=0;
+  demo=null;useSub=false;rewardText='';
+  $('btnSite').classList.remove('hidden');
+  $('btnSite').textContent='阵地：陆基';
+  genWave();
+  renderWarheads();updateShots();
+  toast('无尽挑战：尽可能多地摧毁核心，弹药耗尽即结束！');
+}
+function genWave(){
+  wave++;
+  lv.wind=Math.round((Math.random()*2-1)*22);
+  $('hudLevel').textContent=`∞ 无尽挑战 · 第${wave}波 · 得分${score}`;
+  $('hudWind').textContent=lv.wind?`风沙 ${lv.wind>0?'→':'←'} ${Math.abs(lv.wind)>14?'大':'小'}`:'';
+  blocks=[];
+  const nCore=2+Math.min(wave,4);
+  let tries=0;
+  const clearOfSub=(bx,fw)=>bx+fw<=SUB.x-56||bx>=SUB.x+56;   // 给艇身留出位置，但目标可以环绕四周
+  while(blocks.filter(b=>b.type==='core').length<nCore&&tries++<60){
+    const bx=480+Math.floor(Math.random()*10)*48;            // 480~912
+    const kind=Math.random();
+    if(kind<0.3){          // 单柱塔
+      if(!clearOfSub(bx,48))continue;
+      const sup=Math.random()<0.5?'steel':'concrete';
+      blocks.push({x:bx,y:GROUND-40,w:48,h:40,type:sup,hp:sup==='steel'?2:1});
+      blocks.push({x:bx+4,y:GROUND-80,w:40,h:40,type:'core',hp:1});
+    }else if(kind<0.55){   // 三层高塔
+      if(!clearOfSub(bx,40))continue;
+      blocks.push({x:bx,y:GROUND-40,w:40,h:40,type:'concrete',hp:1});
+      blocks.push({x:bx,y:GROUND-80,w:40,h:40,type:'steel',hp:2});
+      blocks.push({x:bx,y:GROUND-120,w:40,h:40,type:'core',hp:1});
+    }else if(kind<0.8){    // 碉堡：双钢壁后藏核心
+      if(!clearOfSub(bx,94))continue;
+      blocks.push({x:bx,y:GROUND-40,w:22,h:40,type:'steel',hp:2});
+      blocks.push({x:bx+22,y:GROUND-40,w:22,h:40,type:'steel',hp:2});
+      blocks.push({x:bx+54,y:GROUND-40,w:40,h:40,type:'core',hp:1});
+    }else{                 // 金字塔
+      if(!clearOfSub(bx,100))continue;
+      blocks.push({x:bx,y:GROUND-40,w:100,h:40,type:'concrete',hp:1});
+      blocks.push({x:bx+30,y:GROUND-80,w:40,h:40,type:'steel',hp:2});
+      blocks.push({x:bx+30,y:GROUND-120,w:40,h:40,type:'core',hp:1});
+    }
+  }
+  const walls=Math.min(wave,3);                              // 随机护甲墙
+  for(let i=0;i<walls;i++){
+    const wx=480+Math.floor(Math.random()*10)*48;
+    if(!clearOfSub(wx,24))continue;
+    blocks.push({x:wx,y:GROUND-120,w:24,h:120,type:'steel',hp:2});
+  }
+}
+function waveClear(){
+  warheads.normal+=3;let bonus='';
+  if(wave%3===0){warheads.atomic=(warheads.atomic||0)+1;bonus+=' +1原子弹';}
+  if(wave%4===0){warheads.bunker=(warheads.bunker||0)+1;bonus+=' +1钻地弹';}
+  if(wave%5===0){warheads.hydro=(warheads.hydro||0)+1;bonus+=' +1氢弹';}
+  toast(`第${wave}波已清除！补给 +3常规弹${bonus}`);
+  genWave();renderWarheads();updateShots();
+}
+function endlessOver(){
+  state='result';
+  showModal(`<h2>无尽挑战结束</h2><p>你坚持到了第 <b style="color:#f0c869">${wave}</b> 波，共摧毁核心 <b style="color:#f0c869">${score}</b> 个。<br>戈壁无言，星辰为证——要不要再挑战一次？</p>
+    <button class="mbtn" onclick="startEndless()">再来一次</button>
+    <button class="mbtn ghost" onclick="renderMenu()">返回首页</button>`);
+}
+
+/* ================= 定点试爆 ================= */
+function tryDeploy(pt){
+  if((warheads.deploy||0)<=0)return;
+  if(pt.x<380||pt.x>W-20||pt.y<60||pt.y>GROUND-12){toast('核装置要部署在右侧场地区域');return;}
+  warheads.deploy--;devices.push({x:pt.x,y:pt.y});
+  spawn(pt.x,pt.y,8,'#ff9b4d');
+  if(warheads.deploy<=0)deployMode=false;
+  renderWarheads();
+}
+function detonateDevices(){
+  if(!devices.length)return;
+  const ds=devices;devices=[];deployMode=false;
+  ds.forEach((d,i)=>setTimeout(()=>{if(state==='play'){explode(d.x,d.y,'deploy');checkEnd();}},i*150));
+  renderWarheads();
+}
+
+/* ================= 胜负 ================= */
+function winLevel(){
+  state='result';
+  if(lvIdx===progress)progress=Math.min(progress+1,LEVELS.length);
+  const newSCI=SCIENTISTS.find(s=>s.after===lvIdx+1&&!hasSCI(s.id));
+  if(newSCI)unlockedSCI.push(newSCI.id);
+  if(lv.milestoneId&&!hasSCI(lv.milestoneId))unlockedSCI.push(lv.milestoneId);   // 里程碑能力（原子弹弹头）
+  save();
+  let html=`<h2>试验成功！</h2><p class="quote">${lv.fact}</p>`;
+  if(lv.milestone)html+=`<hr style="border-color:#3a4570;margin:14px 0"><p style="color:#ffd27b;font-size:16px">${lv.milestone}</p>`;
+  if(newSCI){
+    html+=`<hr style="border-color:#3a4570;margin:14px 0">
+    <p style="color:#f0c869;font-size:18px">科学家归队：${newSCI.name} · ${newSCI.title}</p>
+    <p class="quote">${newSCI.quote}</p><p>${newSCI.desc}</p>`;
+  }
+  const next=lvIdx+1<LEVELS.length&&lvIdx+1<=progress;
+  html+=`<button class="mbtn" onclick="${next?`showIntro(${lvIdx+1})`:'renderMenu()'}">${next?'下一关':'返回首页'}</button>
+         <button class="mbtn ghost" onclick="renderMenu()">首页</button>`;
+  showModal(html);
+}
+function winOrbit(){
+  state='result';missile=null;
+  if(lvIdx===progress)progress=Math.min(progress+1,LEVELS.length);
+  const newSCI=SCIENTISTS.find(s=>s.after===lvIdx+1&&!hasSCI(s.id));
+  if(newSCI)unlockedSCI.push(newSCI.id);   // 孙家栋归队 → 瞄准镜解锁
+  save();
+  spawn(lv.orbit.x,lv.orbit.y,50,'#8be0ff');
+  let sciHtml='';
+  if(newSCI)sciHtml=`<hr style="border-color:#3a4570;margin:14px 0">
+    <p style="color:#f0c869;font-size:18px">科学家归队：${newSCI.name} · ${newSCI.title}</p>
+    <p class="quote">${newSCI.quote}</p><p>${newSCI.desc}</p>`;
+  showModal(`<h2>卫星入轨！</h2>
+    <p class="quote">${lv.fact}</p>${sciHtml}
+    <p style="margin-top:10px;color:#f0c869">热爱祖国、无私奉献，自力更生、艰苦奋斗，大力协同、勇于登攀。</p>
+    <p style="color:#9aa3c7">—— “两弹一星”精神，星辰为证 ——</p>
+    <button class="mbtn" onclick="showIntro(${lvIdx+1})">下一关</button>
+    <button class="mbtn ghost" onclick="renderMenu()">首页</button>`);
+}
+function loseLevel(){
+  state='result';
+  showModal(`<h2>试验失败</h2><p>弹药耗尽，仍有目标未摧毁。<br>戈壁滩上，失败是家常便饭——调整弹道，再来一次。</p>
+    <button class="mbtn" onclick="startLevel()">重新开始</button>
+    <button class="mbtn ghost" onclick="renderMenu()">返回首页</button>`);
+}
+
+/* ================= 绘制 ================= */
+function draw(){
+  ctx.save();
+  if(shakeT>0)ctx.translate((Math.random()-.5)*shakeM,(Math.random()-.5)*shakeM);
+  // 天空
+  const sky=ctx.createLinearGradient(0,0,0,H);
+  sky.addColorStop(0,'#0b1026');sky.addColorStop(.7,'#2a2350');sky.addColorStop(1,'#5a3a3a');
+  ctx.fillStyle=sky;ctx.fillRect(-20,-20,W+40,H+40);
+  // 星
+  ctx.fillStyle='#ffffff55';
+  for(let i=0;i<40;i++){ctx.fillRect((i*137)%W,(i*61)%180,2,2);}
+  // 远山 / 戈壁
+  ctx.fillStyle='#3a2c33';ctx.beginPath();
+  ctx.moveTo(0,GROUND);ctx.quadraticCurveTo(240,400,480,GROUND);ctx.fill();
+  ctx.fillStyle='#4a3630';ctx.beginPath();
+  ctx.moveTo(300,GROUND);ctx.quadraticCurveTo(640,380,960,GROUND);ctx.fill();
+  ctx.fillStyle='#6b4f35';ctx.fillRect(-20,GROUND,W+40,H-GROUND+20);
+  ctx.fillStyle='#7d5f41';ctx.fillRect(-20,GROUND,W+40,6);
+
+  if(state==='play'||state==='result'){
+    drawLauncher();
+    // 轨道窗口
+    if(lv&&lv.orbit){
+      const o=lv.orbit;ctx.save();
+      ctx.strokeStyle='#8be0ff';ctx.setLineDash([8,6]);ctx.lineWidth=2;
+      ctx.beginPath();ctx.arc(o.x,o.y,o.r,0,6.283);ctx.stroke();
+      ctx.setLineDash([]);ctx.fillStyle='#8be0ff22';ctx.fill();
+      ctx.fillStyle='#8be0ff';ctx.font='14px sans-serif';ctx.textAlign='center';
+      ctx.fillText('轨道窗口',o.x,o.y-o.r-8);ctx.restore();
+    }
+    // 掩体
+    for(const b of blocks)drawBlock(b);
+    // 潜射阵地画在掩体之上：目标可以环绕在它四周
+    if(subAvail())drawSub();
+    // 已部署的核装置
+    for(const d of devices)drawDevice(d);
+    // 预览
+    if(aiming&&state==='play')drawAim();
+    // 演示
+    if(demo&&state==='play')drawDemo();
+    // 导弹
+    if(missile)drawMissile();
+    // 粒子
+    for(const p of particles){ctx.globalAlpha=Math.max(0,p.life);ctx.fillStyle=p.color;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,6.283);ctx.fill();}
+    ctx.globalAlpha=1;
+    // 提示
+    if(state==='play'&&rewardText){
+      ctx.fillStyle='#f0c869bb';ctx.font='bold 13px sans-serif';ctx.textAlign='right';
+      ctx.fillText('★ '+rewardText+' ★',W-16,18);
+    }
+    if(state==='play'&&!missile&&!aiming&&!demo){
+      ctx.fillStyle='#ffffff88';ctx.font='14px sans-serif';ctx.textAlign='left';
+      let tip='从画面中央按住，向左下方拖拽拉弓，松开发射';
+      if(hasSCI('qian'))tip+='　|　飞行中按空格 = 钱学森弹道';
+      ctx.fillText(tip,20,30);
+    }
+    if(missile&&hasSCI('qian')&&!glideUsed){
+      ctx.fillStyle='#8be0ff';ctx.font='bold 15px sans-serif';ctx.textAlign='center';
+      ctx.fillText('按【空格】发动钱学森弹道！',W/2,40);
+    }
+    if(missile&&glideUsed&&stage2Avail()&&!stage2Used){
+      ctx.fillStyle='#ffb366';ctx.font='bold 15px sans-serif';ctx.textAlign='center';
+      ctx.fillText('再按【空格】二级点火！',W/2,40);
+    }
+    if(deployMode){
+      ctx.fillStyle='#ff9b4d';ctx.font='bold 15px sans-serif';ctx.textAlign='center';
+      ctx.fillText('部署模式：点击右侧场地架设核装置（再点一次按钮取消）',W/2,40);
+    }
+  }
+  ctx.restore();
+}
+/* 演示动画绘制：按住 → 拖拽（带弹道预览） → 发射 */
+function drawDemo(){
+  const d=demo,D=DEMO_PULL;
+  ctx.save();
+  // 标题
+  ctx.fillStyle='#f0c869';ctx.font='bold 18px sans-serif';ctx.textAlign='center';
+  ctx.fillText('操作演示（点击画面跳过）',W/2,70);
+  if(!d.flying){
+    // 阶段一：按住（0~0.7s） 阶段二：拖拽（0.7~1.9s）
+    const dragT=Math.max(0,Math.min(1,(d.t-0.7)/1.2));
+    const fx=D.sx+D.dx*dragT,fy=D.sy+D.dy*dragT;
+    const pullDx=D.dx*dragT,pullDy=D.dy*dragT;
+    // 拖拽轨迹虚线
+    if(dragT>0){
+      ctx.strokeStyle='#f0c869aa';ctx.setLineDash([6,6]);ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(D.sx,D.sy);ctx.lineTo(fx,fy);ctx.stroke();ctx.setLineDash([]);
+      // 导轨 + 弹丸
+      const px=LAUNCH.x+pullDx,py=LAUNCH.y+pullDy;
+      drawRails(Math.atan2(pullDy,pullDx),Math.hypot(pullDx,pullDy)/powerCap(),true);
+      ctx.fillStyle='#d8d8d8';ctx.beginPath();ctx.arc(px,py,9,0,6.283);ctx.fill();
+      ctx.strokeStyle='#00000088';ctx.stroke();
+      // 弹道预览
+      drawPreview(-pullDx*POWER,-pullDy*POWER);
+    }
+    // 手指圆点
+    ctx.fillStyle='#f0c869';ctx.beginPath();ctx.arc(fx,fy,10,0,6.283);ctx.fill();
+    ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();ctx.lineWidth=1;
+    // 阶段文字
+    ctx.fillStyle='#fff';ctx.font='15px sans-serif';
+    ctx.fillText(dragT===0?'① 从画面中央按住':'② 向左下方拖拽拉弓',D.sx,D.sy-24);
+  }else{
+    // 演示弹飞行
+    ctx.fillStyle='#fff';ctx.font='15px sans-serif';
+    ctx.fillText('③ 松开发射！',W/2,100);
+    ctx.strokeStyle='#ffaa5533';ctx.lineWidth=3;ctx.beginPath();
+    d.trail.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();ctx.lineWidth=1;
+    const a=Math.atan2(d.vy,d.vx);
+    ctx.translate(d.x,d.y);ctx.rotate(a);
+    ctx.fillStyle='#d8d8d8';
+    ctx.beginPath();ctx.moveTo(10,0);ctx.lineTo(-8,-5);ctx.lineTo(-8,5);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#ff8833';
+    ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(-14-Math.random()*6,-3);ctx.lineTo(-14-Math.random()*6,3);ctx.closePath();ctx.fill();
+  }
+  ctx.restore();
+}
+function drawPreview(vx0,vy0){
+  const C=launchPos();
+  let x=C.x,y=C.y,vx=vx0,vy=vy0;
+  const dt=0.05;
+  ctx.fillStyle='#ffffffaa';
+  for(let i=0;i<120;i++){
+    vx+=lv.wind*dt;vy+=G*dt;x+=vx*dt;y+=vy*dt;
+    if(y>GROUND||x>W)break;
+    if(i%2===0){ctx.beginPath();ctx.arc(x,y,2.5,0,6.283);ctx.fill();}
+  }
+}
+function drawBlock(b){
+  if(b.type==='concrete')ctx.fillStyle=b.hp<1?'#6e6558':'#8d8272';
+  else if(b.type==='steel')ctx.fillStyle=b.hp<2?'#5d6b7d':'#7e90a8';
+  else{ctx.fillStyle='#c0392b';}
+  ctx.fillRect(b.x,b.y,b.w,b.h);
+  ctx.strokeStyle='#00000066';ctx.strokeRect(b.x,b.y,b.w,b.h);
+  if(b.type==='core'){
+    ctx.fillStyle='#ffd8d8';ctx.font='bold 18px sans-serif';ctx.textAlign='center';
+    ctx.fillText('★',b.x+b.w/2,b.y+b.h/2+6);
+    ctx.strokeStyle='#ff6b6b';ctx.lineWidth=2;ctx.strokeRect(b.x-2,b.y-2,b.w+4,b.h+4);ctx.lineWidth=1;
+  }
+}
+function drawDevice(d){
+  // 铁塔：从地面架起
+  ctx.strokeStyle='#8d8272';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(d.x-16,GROUND);ctx.lineTo(d.x,d.y);ctx.lineTo(d.x+16,GROUND);ctx.stroke();
+  ctx.lineWidth=1;
+  for(let y=d.y+14;y<GROUND-4;y+=14){const t=(y-d.y)/(GROUND-d.y);
+    ctx.beginPath();ctx.moveTo(d.x-16*t,y);ctx.lineTo(d.x+16*t,y);ctx.stroke();}
+  // 塔顶核装置（红灯闪烁）
+  ctx.fillStyle=Math.sin(Date.now()/180)>0?'#ff5b4d':'#c0392b';
+  ctx.beginPath();ctx.arc(d.x,d.y,10,0,6.283);ctx.fill();
+  ctx.strokeStyle='#ffd27b';ctx.stroke();
+}
+function drawRails(ang,ratio=0,showForward=false,C=LAUNCH){
+  const px=Math.cos(ang+Math.PI/2),py=Math.sin(ang+Math.PI/2); // 垂直于发射方向
+  const half=24+ratio*36;                                      // 两侧虚线随力度变长
+  const ax=Math.cos(ang),ay=Math.sin(ang);
+  ctx.strokeStyle='#93a5cf';ctx.lineWidth=2;ctx.setLineDash([6,6]);
+  // 虚线：过中心、垂直于发射方向
+  ctx.beginPath();ctx.moveTo(C.x-px*half,C.y-py*half);ctx.lineTo(C.x+px*half,C.y+py*half);ctx.stroke();
+  if(showForward){   // 拉开后显示：沿发射方向的虚线
+    ctx.beginPath();ctx.moveTo(C.x,C.y);ctx.lineTo(C.x-ax*80,C.y-ay*80);ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  // 虚线两端各一条小杠（沿发射方向）
+  const t=9;
+  ctx.lineCap='round';
+  for(const s of [1,-1]){
+    const ex=C.x+px*half*s,ey=C.y+py*half*s;
+    ctx.strokeStyle='#46536f';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(ex-ax*t,ey-ay*t);ctx.lineTo(ex+ax*t,ey+ay*t);ctx.stroke();
+    ctx.strokeStyle='#93a5cf';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(ex-ax*t,ey-ay*t);ctx.lineTo(ex+ax*t,ey+ay*t);ctx.stroke();
+  }
+  ctx.lineCap='butt';ctx.lineWidth=1;
+}
+function demoDragActive(){return demo&&demo.t>0.7&&!demo.flying;}
+function drawLauncher(){
+  ctx.fillStyle='#37415f';ctx.fillRect(LAUNCH.x-38,GROUND-14,76,14);   // 底盘
+  ctx.fillStyle='#4a5578';ctx.fillRect(LAUNCH.x-5,LAUNCH.y,10,GROUND-14-LAUNCH.y); // 支柱
+  if(!aiming&&!demoDragActive()&&!useSub)drawRails(RAIL.defAng);        // 导轨（静止态）
+  ctx.fillStyle='#f0c869';ctx.beginPath();ctx.arc(LAUNCH.x,LAUNCH.y,7,0,6.283);ctx.fill();
+  ctx.fillStyle='#9aa3c7';ctx.font='12px sans-serif';ctx.textAlign='center';
+  ctx.fillText('发射阵地',LAUNCH.x,GROUND+26);
+}
+function drawSub(){
+  const S=SUB;
+  ctx.fillStyle='#2e4a5e';                                             // 艇身
+  ctx.beginPath();ctx.ellipse(S.x,S.y+14,46,12,0,0,6.283);ctx.fill();
+  ctx.fillStyle='#3d5f78';ctx.fillRect(S.x-10,S.y-4,20,12);            // 指挥塔
+  ctx.fillStyle='#7ec8e355';ctx.fillRect(S.x-54,S.y+24,108,3);         // 水线
+  if(!aiming&&!demoDragActive()&&useSub)drawRails(RAIL.defAng,0,false,S);
+  ctx.fillStyle='#f0c869';ctx.beginPath();ctx.arc(S.x,S.y,6,0,6.283);ctx.fill();
+  ctx.fillStyle='#9aa3c7';ctx.font='12px sans-serif';ctx.textAlign='center';
+  ctx.fillText('潜射阵地',S.x,GROUND+26);
+}
+function drawAim(){
+  const v=aimVec(),pv=pullVec();if(!v||!pv)return;
+  const C=launchPos();
+  const px=C.x+pv.dx,py=C.y+pv.dy;
+  const pl=Math.hypot(pv.dx,pv.dy)||1,ux=pv.dx/pl,uy=pv.dy/pl;
+  drawRails(Math.atan2(pv.dy,pv.dx),v.power,true,C);   // 准星旋转对准拉线方向，随力度展开
+  // 圆圈（弹丸）：被拉离中心，内嵌指向发射方向的小箭头
+  ctx.fillStyle=WARHEAD_INFO[selWarhead].color;
+  ctx.beginPath();ctx.arc(px,py,9,0,6.283);ctx.fill();
+  ctx.strokeStyle='#00000088';ctx.stroke();
+  ctx.strokeStyle='#222';ctx.lineWidth=2;ctx.beginPath();
+  ctx.moveTo(px+ux*4,py+uy*4);ctx.lineTo(px-ux*5,py-uy*5);ctx.stroke();
+  ctx.fillStyle='#222';ctx.beginPath();
+  ctx.moveTo(px-ux*10,py-uy*10);
+  ctx.lineTo(px-ux*4-uy*3.4,py-uy*4+ux*3.4);
+  ctx.lineTo(px-ux*4+uy*3.4,py-uy*4-ux*3.4);
+  ctx.closePath();ctx.fill();ctx.lineWidth=1;
+  // 力度条
+  ctx.fillStyle='#00000088';ctx.fillRect(C.x-60,C.y+36,120,10);
+  ctx.fillStyle=v.power>0.85?'#ff6b6b':'#f0c869';
+  ctx.fillRect(C.x-58,C.y+38,116*v.power,6);
+  ctx.strokeStyle='#888';ctx.strokeRect(C.x-60,C.y+36,120,10);
+  ctx.fillStyle='#fff';ctx.font='11px sans-serif';ctx.textAlign='center';
+  ctx.fillText('力度 '+Math.round(v.power*100)+'%',C.x,C.y+60);
+  // 弹道预览：瞄准镜（孙家栋归队后解锁）
+  if(hasSCI('sun'))drawPreview(v.vx,v.vy);
+}
+function drawMissile(){
+  const m=missile;
+  // 尾迹
+  ctx.strokeStyle=glideT>0?'#8be0ff88':'#ffaa5533';ctx.lineWidth=3;ctx.beginPath();
+  m.trail.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();ctx.lineWidth=1;
+  // 弹体
+  const a=Math.atan2(m.vy,m.vx);
+  ctx.save();ctx.translate(m.x,m.y);ctx.rotate(a);
+  ctx.fillStyle=WARHEAD_INFO[m.type].color;
+  ctx.beginPath();ctx.moveTo(10,0);ctx.lineTo(-8,-5);ctx.lineTo(-8,5);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#ff8833';ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(-14-Math.random()*6,-3);ctx.lineTo(-14-Math.random()*6,3);ctx.closePath();ctx.fill();
+  ctx.restore();
+}
+
+/* ================= 其它 ================= */
+let toastTimer=null;
+function toast(msg){
+  const t=$('toast');t.textContent=msg;t.classList.remove('hidden');t.style.opacity=1;
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>{t.style.opacity=0;setTimeout(()=>t.classList.add('hidden'),300);},2200);
+}
+$('btnRestart').onclick=()=>{if(state==='play')(endless?startEndless:startLevel)();};
+$('btnSite').onclick=()=>{
+  if(state!=='play')return;
+  useSub=!useSub;
+  $('btnSite').textContent=useSub?'阵地：潜射':'阵地：陆基';
+  toast(useSub?'切换至潜射阵地：巨浪出水，敌前点火！（出水初速低，力度-28%）':'切换至陆基发射阵地');
+};
+$('btnMenu').onclick=renderMenu;
+window.showIntro=showIntro;window.startLevel=startLevel;window.renderMenu=renderMenu;window.showView=showView;
+window.startEndless=startEndless;
+
+renderMenu();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
