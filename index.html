@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>两弹一星汇报用小游戏</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; user-select:none; }
@@ -80,7 +80,7 @@
   </div>
   <canvas id="cv" width="960" height="540"></canvas>
   <div id="toast" class="hidden"></div>
-  <div id="ver">build v14</div>
+  <div id="ver">build v15</div>
 
   <!-- 首页 + 子页面 -->
   <div class="overlay" id="menu">
@@ -93,7 +93,7 @@
         <button class="hbtn" id="btnSci">科学家图鉴</button>
         <button class="hbtn" id="btnSet">设置</button>
       </div>
-      <div class="tip">操作：画面任意位置按住，向左下拖拽拉弓，松开发射 ｜ 飞行中按【空格】= 钱学森弹道 / 二级点火 ｜ 通关主线后解锁【无尽挑战】</div>
+      <div class="tip">操作：画面任意位置按住，向左下拖拽拉弓，松开发射 ｜ 飞行中按【空格】（手机：再点一下屏幕）= 钱学森弹道 / 二级点火 ｜ 通关主线后解锁【无尽挑战】</div>
     </div>
     <!-- 关卡地图 -->
     <div id="viewLevels" class="hidden">
@@ -436,20 +436,26 @@ function subAvail(){return hasSCI('sub')||lvIdx>=13;}
 function stage2Avail(){return hasSCI('stage2')||lvIdx>=11;}
 function enrichAvail(){return hasSCI('enrich')||lvIdx>=1;}
 function cvPos(e){const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};}
-cv.addEventListener('mousedown',e=>{
+function tapDown(p){   // 统一的"按下"逻辑（鼠标/触屏共用）
   if(state!=='play')return;
   if(demo){demo=null;toast('轮到你了！');return;}   // 点击跳过演示
-  if(deployMode){tryDeploy(cvPos(e));return;}     // 部署模式：点击架设核装置
-  if(missile){tryGlide();return;}
+  if(deployMode){tryDeploy(p);return;}            // 部署模式：点击架设核装置
+  if(missile){tryGlide();return;}                 // 飞行中点击 = 钱学森弹道/二级点火
   if(totalShots()<=0)return;
-  aiming=true;aimStart=cvPos(e);aimPt=aimStart;
-});
+  aiming=true;aimStart=p;aimPt=aimStart;
+}
+cv.addEventListener('mousedown',e=>tapDown(cvPos(e)));
 cv.addEventListener('mousemove',e=>{if(aiming)aimPt=cvPos(e);});
 window.addEventListener('mouseup',()=>{
   if(!aiming)return;aiming=false;
   const v=aimVec();if(!v)return;
   fire(v);
 });
+/* 触屏适配：拖动弹射 + 飞行中点一下屏幕触发滑翔/二级点火 */
+function touchPos(t){const r=cv.getBoundingClientRect();return{x:(t.clientX-r.left)*W/r.width,y:(t.clientY-r.top)*H/r.height};}
+cv.addEventListener('touchstart',e=>{e.preventDefault();tapDown(touchPos(e.changedTouches[0]));},{passive:false});
+cv.addEventListener('touchmove',e=>{e.preventDefault();if(aiming)aimPt=touchPos(e.changedTouches[0]);},{passive:false});
+cv.addEventListener('touchend',e=>{e.preventDefault();if(!aiming)return;aiming=false;const v=aimVec();if(!v)return;fire(v);},{passive:false});
 window.addEventListener('keydown',e=>{
   if(e.code==='Space'){e.preventDefault();if(state==='play'&&missile)tryGlide();}
 });
