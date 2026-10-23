@@ -14,14 +14,14 @@ export class ProgressionSystem {
     levelIndex: number,
     unlockedList: readonly string[]
   ): boolean {
-    return unlockedList.includes('sub') || levelIndex >= 13;
+    return unlockedList.includes('sub') || levelIndex >= 11;
   }
 
   public static isStage2Available(
     levelIndex: number,
     unlockedList: readonly string[]
   ): boolean {
-    return unlockedList.includes('stage2') || levelIndex >= 11;
+    return unlockedList.includes('stage2') || levelIndex >= 9;
   }
 
   public static isEnrichmentAvailable(
@@ -36,9 +36,9 @@ export class ProgressionSystem {
     levelIndex: number,
     unlockedList: readonly string[]
   ): boolean {
-    if (type === 'atomic') return !unlockedList.includes('atomic') && levelIndex < 5;
-    if (type === 'hydro') return !unlockedList.includes('yu') && levelIndex < 7;
-    if (type === 'bunker') return !unlockedList.includes('bunker') && levelIndex < 8;
+    if (type === 'atomic') return !unlockedList.includes('atomic') && levelIndex < 4;
+    if (type === 'hydro') return !unlockedList.includes('yu') && levelIndex < 5;
+    if (type === 'bunker') return !unlockedList.includes('bunker') && levelIndex < 6;
     return false;
   }
 

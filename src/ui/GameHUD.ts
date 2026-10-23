@@ -2,6 +2,7 @@ import { WARHEAD_CONFIGS } from '../data/gameConfig';
 import { GameEngine } from '../engine/GameEngine';
 import { ProgressionSystem } from '../systems/ProgressionSystem';
 import { WarheadType } from '../types/game';
+import { ICONS } from './Icons';
 
 export interface HUDCallbacks {
   onSelectWarhead: (type: WarheadType) => void;
@@ -46,17 +47,17 @@ export class GameHUD {
         : '';
 
     const title = engine.isEndless
-      ? `∞ 无尽 · ${engine.endlessWave}波 · ${engine.endlessScore}分`
+      ? `无尽战略演习 · 第${engine.endlessWave}波 · ${engine.endlessScore}分`
       : engine.level
       ? `${engine.level.year} ${engine.level.name}`
       : '两弹一星';
 
     const warheadIcons: Record<WarheadType, string> = {
-      normal: '🚀',
-      atomic: '☢',
-      hydro: '⚛',
-      bunker: '⚡',
-      deploy: '📦',
+      normal: ICONS.rocket('warhead-sym-svg'),
+      atomic: ICONS.atomic('warhead-sym-svg'),
+      hydro: ICONS.hydro('warhead-sym-svg'),
+      bunker: ICONS.bunker('warhead-sym-svg'),
+      deploy: ICONS.deploy('warhead-sym-svg'),
     };
 
     // Build Landscape Top-Dock Warheads Html: ONLY show warheads that are part of this level or currently have ammo
@@ -113,7 +114,7 @@ export class GameHUD {
 
         warheadsHtml += `
           <button class="${classes}" id="btn-deploy" ${(engine.warheads.deploy || 0) <= 0 ? 'disabled' : ''} title="定点核装置架设">
-            <span class="warhead-sym">📦</span>
+            <span class="warhead-sym">${ICONS.deploy('warhead-sym-svg')}</span>
             <span class="warhead-name">装置</span>
             <span class="warhead-count">${engine.warheads.deploy || 0}</span>
           </button>
@@ -125,7 +126,7 @@ export class GameHUD {
     if (engine.deployedDevices.length > 0) {
       warheadsHtml += `
         <button class="hud-warhead-btn detonate-btn active" id="btn-detonate" title="立即起爆地面核装置">
-          <span class="warhead-sym">💥</span>
+          <span class="warhead-sym">${ICONS.detonate('warhead-sym-svg')}</span>
           <span class="warhead-name">起爆</span>
           <span class="warhead-count">${engine.deployedDevices.length}</span>
         </button>
@@ -139,31 +140,31 @@ export class GameHUD {
     );
     const siteBtnHtml = isSubAvailable
       ? `<button class="hud-warhead-btn sub-btn ${engine.useSub ? 'active sub-active' : ''}" id="btn-site" title="${engine.useSub ? '切换陆基发射' : '切换巨浪潜射'}">
-          <span class="warhead-sym">${engine.useSub ? '⚓' : '🚀'}</span>
+          <span class="warhead-sym">${engine.useSub ? ICONS.submarine('warhead-sym-svg') : ICONS.rocket('warhead-sym-svg')}</span>
           <span class="warhead-name">${engine.useSub ? '潜射' : '陆基'}</span>
         </button>`
       : '';
 
     const presBadge = engine.isPresentationMode
-      ? '<span class="hud-pill pres-pill">汇报</span>'
+      ? '<span class="hud-pill pres-pill">演示</span>'
       : '';
 
     // In-flight ability trigger button: in landscape, float near bottom center; in portrait, placed in Command Deck
     let inFlightAbilityHtml = '';
     if (engine.missile && !isPortrait) {
       const hasQian = engine.unlockedScientists.includes('qian');
-      const isStage2 = engine.unlockedScientists.includes('stage2') || engine.levelIndex >= 11;
+      const isStage2 = engine.unlockedScientists.includes('stage2') || engine.levelIndex >= 9;
 
       if (!engine.missile.glideUsed && hasQian) {
         inFlightAbilityHtml = `
           <button class="hud-ability-badge ability-glide" id="btn-ability-trigger">
-            <span>🚀 钱学森弹道 (轻触滑翔)</span>
+            <span>${ICONS.glide('hud-icon-xs inline-icon')} 钱学森弹道 (轻触滑翔)</span>
           </button>
         `;
       } else if (engine.missile.glideUsed && isStage2 && !engine.missile.stage2Used) {
         inFlightAbilityHtml = `
           <button class="hud-ability-badge ability-stage2" id="btn-ability-trigger">
-            <span>🔥 二级点火 (冲刺加速)</span>
+            <span>${ICONS.flame('hud-icon-xs inline-icon')} 二级点火 (冲刺加速)</span>
           </button>
         `;
       }
@@ -248,11 +249,11 @@ export class GameHUD {
 
     const warheadKeys: WarheadType[] = ['normal', 'atomic', 'hydro', 'bunker'];
     const warheadIcons: Record<WarheadType, string> = {
-      normal: '🚀',
-      atomic: '☢',
-      hydro: '⚛',
-      bunker: '⚡',
-      deploy: '📦',
+      normal: ICONS.rocket('warhead-sym-svg'),
+      atomic: ICONS.atomic('warhead-sym-svg'),
+      hydro: ICONS.hydro('warhead-sym-svg'),
+      bunker: ICONS.bunker('warhead-sym-svg'),
+      deploy: ICONS.deploy('warhead-sym-svg'),
     };
 
     let cardsHtml = '';
@@ -285,7 +286,7 @@ export class GameHUD {
     if ((engine.warheads.deploy || 0) > 0 || engine.deployedDevices.length > 0) {
       cardsHtml += `
         <div class="deck-weapon-card ${engine.deployMode ? 'active' : ''} ${(engine.warheads.deploy || 0) <= 0 ? 'disabled' : ''}" id="deck-btn-deploy">
-          <span class="w-icon">📦</span>
+          <span class="w-icon">${ICONS.deploy('warhead-sym-svg')}</span>
           <span class="w-name">核装置</span>
           <span class="w-count">${engine.warheads.deploy || 0}套</span>
         </div>
@@ -301,18 +302,18 @@ export class GameHUD {
     let abilityBtnHtml = '';
     if (engine.missile) {
       const hasQian = engine.unlockedScientists.includes('qian');
-      const isStage2 = engine.unlockedScientists.includes('stage2') || engine.levelIndex >= 11;
+      const isStage2 = engine.unlockedScientists.includes('stage2') || engine.levelIndex >= 9;
 
       if (!engine.missile.glideUsed && hasQian) {
         abilityBtnHtml = `
           <button class="deck-act-btn ability" id="deck-btn-ability">
-            🚀 钱学森弹道 (滑翔增程)
+            ${ICONS.glide('hud-icon-xs inline-icon')} 钱学森弹道 (滑翔增程)
           </button>
         `;
       } else if (engine.missile.glideUsed && isStage2 && !engine.missile.stage2Used) {
         abilityBtnHtml = `
           <button class="deck-act-btn ability" id="deck-btn-ability">
-            🔥 二级点火 (冲刺加速)
+            ${ICONS.flame('hud-icon-xs inline-icon')} 二级点火 (冲刺加速)
           </button>
         `;
       }
@@ -353,14 +354,14 @@ export class GameHUD {
               ${
                 isSubAvailable
                   ? `<button class="deck-act-btn ${engine.useSub ? 'primary' : ''}" id="deck-btn-site">
-                      ${engine.useSub ? '⚓ 潜艇水下前出阵地' : '🚀 切换巨浪潜射阵地'}
+                      ${engine.useSub ? `${ICONS.submarine('hud-icon-xs inline-icon')} 潜艇水下前出阵地` : `${ICONS.rocket('hud-icon-xs inline-icon')} 切换巨浪潜射阵地`}
                     </button>`
                   : ''
               }
               ${
                 engine.deployedDevices.length > 0
                   ? `<button class="deck-act-btn primary" id="deck-btn-detonate">
-                      💥 立即起爆已架设核装置 (${engine.deployedDevices.length})
+                      ${ICONS.detonate('hud-icon-xs inline-icon')} 立即起爆已架设核装置 (${engine.deployedDevices.length})
                     </button>`
                   : ''
               }
@@ -373,7 +374,7 @@ export class GameHUD {
       <div class="deck-launch-zone" id="deck-launch-pad">
         <div class="deck-pad-crosshair"></div>
         <div class="deck-pad-reticle"></div>
-        <div class="deck-pad-knob" id="deck-pad-knob">🚀</div>
+        <div class="deck-pad-knob" id="deck-pad-knob">${ICONS.rocket('deck-knob-svg')}</div>
         <div class="deck-pad-readout" id="deck-pad-readout">
           ${engine.isAiming ? '已捕获瞄准坐标' : '战术手势瞄准发射盘'}
         </div>

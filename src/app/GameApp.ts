@@ -296,29 +296,41 @@ export class GameApp {
     const curLevelIdx = this.engine.levelIndex;
     const isPresentation = this.engine.isPresentationMode;
 
-    let newSci: ScientistDefinition | undefined;
-    let milestone: string | undefined;
+    const curData = this.saveManager.getData();
+    const nextProg = Math.max(curData.progress, curLevelIdx + 1);
 
+    // Identify all newly unlocked scientists
+    const unlockedSci = [...curData.unlockedScientists];
+    const newlyUnlocked: ScientistDefinition[] = [];
+
+    // 1. Identify any scientists whose level requirement has been met and not yet recorded as unlocked
+    for (const s of SCIENTISTS) {
+      if (s.after <= nextProg && !unlockedSci.includes(s.id)) {
+        newlyUnlocked.push(s);
+        unlockedSci.push(s.id);
+      }
+    }
+
+    // 2. Guarantee that completing this milestone level ALWAYS presents that scientist's honor card!
+    // Every time the player beats Level 1 (钱学森), Level 2 (王承书), Level 4 (邓稼先),
+    // Level 5 (郭永怀), Level 6 (于敏), Level 7 (程开甲), Level 8 (孙家栋),
+    // Level 10 (屠守锷), Level 12 (黄纬禄),
+    // their collectible character card pops up for tribute with the "归队" button,
+    // whether on first clear, replaying in Level Select, or in Presentation mode!
+    const levelSci = SCIENTISTS.find((s) => s.after === curLevelIdx + 1);
+    if (levelSci && !newlyUnlocked.some((s) => s.id === levelSci.id)) {
+      newlyUnlocked.push(levelSci);
+      if (!unlockedSci.includes(levelSci.id)) {
+        unlockedSci.push(levelSci.id);
+      }
+    }
+
+    if (this.engine.level?.milestoneId && !unlockedSci.includes(this.engine.level.milestoneId)) {
+      unlockedSci.push(this.engine.level.milestoneId);
+    }
+
+    const milestone = this.engine.level?.milestone;
     if (!isPresentation) {
-      const curData = this.saveManager.getData();
-      const nextProg = Math.max(curData.progress, curLevelIdx + 1);
-
-      // Scientist unlock check
-      const unlockedSci = [...curData.unlockedScientists];
-      const matchSci = SCIENTISTS.find(
-        (s) => s.after === curLevelIdx + 1 && !unlockedSci.includes(s.id)
-      );
-
-      if (matchSci) {
-        newSci = matchSci;
-        unlockedSci.push(matchSci.id);
-      }
-
-      if (this.engine.level?.milestoneId && !unlockedSci.includes(this.engine.level.milestoneId)) {
-        unlockedSci.push(this.engine.level.milestoneId);
-      }
-
-      milestone = this.engine.level?.milestone;
       this.saveManager.saveProgress(nextProg, unlockedSci);
     }
 
@@ -327,23 +339,76 @@ export class GameApp {
       outcome: isOrbit ? 'orbit_win' : 'win',
       fact: this.engine.level?.fact,
       milestone,
-      newScientist: newSci,
+      newScientist: newlyUnlocked[0],
       hasNextLevel: hasNext,
     };
 
     this.stateMachine.transitionTo('RESULT');
-    this.dialogs.showResult(
-      result,
-      () => {
-        if (hasNext) {
-          this.showLevelIntro(curLevelIdx + 1, isPresentation);
-        } else {
-          this.stateMachine.transitionTo('MENU');
-        }
-      },
-      () => this.startLevel(curLevelIdx, isPresentation),
-      () => this.stateMachine.transitionTo('MENU')
-    );
+
+    const continueToNextStage = () => {
+      if (hasNext) {
+        this.showLevelIntro(curLevelIdx + 1, isPresentation);
+      } else {
+        // All levels completed! Show final grand triumph ending
+        this.dialogs.showResult(
+          result,
+          () => this.stateMachine.transitionTo('MENU'),
+          () => this.startLevel(curLevelIdx, isPresentation),
+          () => this.stateMachine.transitionTo('MENU')
+        );
+      }
+    };
+
+    // If any scientist is newly unlocked, sequentially pop up the card modal(s)
+    // When the user clicks "归队", the card fades out and game continues directly
+    if (newlyUnlocked.length > 0) {
+      const showCardQueue = (queue: ScientistDefinition[]) => {
+        const sci = queue[0];
+        const remaining = queue.slice(1);
+
+        this.dialogs.showScientistUnlockCard(
+          sci,
+          () => {
+            this.sound.playClick();
+            this.dialogs.showToast(`功勋科学家【${sci.name}】荣耀归队！专属能力已就位`);
+
+            if (remaining.length > 0) {
+              window.setTimeout(() => {
+                showCardQueue(remaining);
+              }, 120);
+            } else {
+              // User clicked "归队", card faded out, continue game!
+              continueToNextStage();
+            }
+          },
+          {
+            fact: this.engine.level?.fact,
+            levelNumber: curLevelIdx + 1,
+            continueHint: hasNext ? '点击【归队】即刻继续下一攻坚阶段' : '点击【归队】完成全篇攻坚试验',
+            onHome: () => {
+              this.sound.playClick();
+              this.stateMachine.transitionTo('MENU');
+            },
+          }
+        );
+      };
+
+      showCardQueue(newlyUnlocked);
+    } else {
+      // Standard victory result dialog when no new scientist is unlocked
+      this.dialogs.showResult(
+        result,
+        () => {
+          if (hasNext) {
+            this.showLevelIntro(curLevelIdx + 1, isPresentation);
+          } else {
+            this.stateMachine.transitionTo('MENU');
+          }
+        },
+        () => this.startLevel(curLevelIdx, isPresentation),
+        () => this.stateMachine.transitionTo('MENU')
+      );
+    }
   }
 
   private handleLevelLoss(): void {
@@ -436,6 +501,18 @@ export class GameApp {
       () => {
         this.sound.playClick();
         this.showMainMenu();
+      },
+      (scientist) => {
+        this.sound.playClick();
+        this.dialogs.showScientistUnlockCard(
+          scientist,
+          () => {
+            // Dismissed card from gallery view
+          },
+          {
+            continueHint: '点击【归队】返回展馆',
+          }
+        );
       }
     );
   }
@@ -565,7 +642,7 @@ export class GameApp {
     this.stateMachine.transitionTo('PLAYING');
     this.checkLayoutAndResize();
     this.updateHUD();
-    this.dialogs.showToast('课堂汇报模式启动：任意演示，不计入普通存档');
+    this.dialogs.showToast('自由演示模式启动：任意演练，不计入普通存档');
   }
 
   private getHistoricalScientistsUpToLevel(levelIndex: number): string[] {
@@ -575,7 +652,7 @@ export class GameApp {
         ids.push(s.id);
       }
     });
-    if (levelIndex >= 5) ids.push('atomic');
+    if (levelIndex >= 4) ids.push('atomic');
     return ids;
   }
 

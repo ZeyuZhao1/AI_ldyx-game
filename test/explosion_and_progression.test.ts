@@ -76,14 +76,14 @@ describe('Progression System', () => {
     // Normal is never locked
     expect(ProgressionSystem.isWarheadLocked('normal', 0, [])).toBe(false);
 
-    // Atomic unlocked at level 5 or with milestone
+    // Atomic unlocked at level 4 or with milestone
     expect(ProgressionSystem.isWarheadLocked('atomic', 2, [])).toBe(true);
-    expect(ProgressionSystem.isWarheadLocked('atomic', 5, [])).toBe(false);
+    expect(ProgressionSystem.isWarheadLocked('atomic', 4, [])).toBe(false);
     expect(ProgressionSystem.isWarheadLocked('atomic', 1, ['atomic'])).toBe(false);
 
-    // Hydro unlocked at level 7 or with Yu Min
+    // Hydro unlocked at level 5 or with Yu Min
     expect(ProgressionSystem.isWarheadLocked('hydro', 3, [])).toBe(true);
-    expect(ProgressionSystem.isWarheadLocked('hydro', 7, [])).toBe(false);
+    expect(ProgressionSystem.isWarheadLocked('hydro', 5, [])).toBe(false);
     expect(ProgressionSystem.isWarheadLocked('hydro', 2, ['yu'])).toBe(false);
   });
 

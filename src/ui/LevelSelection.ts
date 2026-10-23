@@ -1,4 +1,5 @@
 import { LEVELS } from '../data/levels';
+import { ICONS } from './Icons';
 
 export interface LevelSelectionCallbacks {
   onSelectLevel: (index: number) => void;
@@ -8,19 +9,15 @@ export interface LevelSelectionCallbacks {
 
 const MILESTONE_SHORT_TAGS = [
   '近程地地导弹',
-  '遥测失利攻坚',
-  '改进型中程导弹',
   '浓缩铀提纯突破',
+  '中程弹道导弹',
   '首颗原子弹爆炸',
-  '核航弹空投试验',
-  '两弹结合实弹打靶',
-  '首颗百万吨氢弹',
+  '两弹结合实弹发射',
+  '首颗全当量氢弹',
   '地下平洞核试验',
-  '首颗人造卫星',
-  '科学实验卫星',
-  '洲际二级打靶',
+  '首颗人造地球卫星',
   '返回式卫星回收',
-  '远程火箭太平洋',
+  '洲际导弹全射程',
   '一箭三星空间试验',
   '巨浪一号水下潜射',
 ];
@@ -44,7 +41,7 @@ export class LevelSelection {
 
     let nodesHtml = '';
 
-    // Render 16 Milestones
+    // Render 12 Milestones
     LEVELS.forEach((lvl, i) => {
       const isLocked = i > progress;
       const isDone = i < progress;
@@ -76,7 +73,7 @@ export class LevelSelection {
                 ${vectorGraphic}
               </div>
               <div class="node-img-overlay"></div>
-              ${isLocked ? '<div class="lock-shield"><span class="lock-icon">🔒</span></div>' : ''}
+              ${isLocked ? `<div class="lock-shield"><span class="lock-icon">${ICONS.lock('lock-icon-svg')}</span></div>` : ''}
             </div>
 
             <!-- Concise Metadata (Zero Clutter) -->
@@ -92,7 +89,7 @@ export class LevelSelection {
                 isLocked
                   ? '<button class="node-action-btn locked" disabled>待解锁</button>'
                   : `<button class="node-action-btn ${isDone ? 'done' : 'primary'}">
-                      ${isDone ? '再次研学' : '研学启航'} →
+                      ${isDone ? '再次试验' : '发射试验'} →
                     </button>`
               }
             </div>
@@ -163,7 +160,7 @@ export class LevelSelection {
             <span class="indicator-cur-year" id="indicator-year">1960.11</span>
             <span class="indicator-divider">·</span>
             <span class="indicator-cur-name" id="indicator-name">东风一号</span>
-            <span class="indicator-counter" id="indicator-counter">1 / 16</span>
+            <span class="indicator-counter" id="indicator-counter">1 / ${LEVELS.length}</span>
           </div>
           <div class="timeline-swipe-hint">左右滑动时间轴探索历史关卡</div>
         </footer>
@@ -289,7 +286,7 @@ export class LevelSelection {
    * Generates authentic SVG badges as reliable fallback for historical milestones
    */
   private static getMilestoneSvg(index: number, name: string): string {
-    const isSpecial = [3, 5, 7, 9, 15].includes(index);
+    const isSpecial = [3, 4, 5, 7, 11].includes(index);
     const borderColor = isSpecial ? '#d4a359' : '#3c4b66';
 
     switch (index) {
@@ -308,7 +305,7 @@ export class LevelSelection {
           </svg>
         `;
 
-      case 4:
+      case 3:
         return `
           <svg viewBox="0 0 100 80" class="milestone-svg">
             <rect width="100" height="80" fill="#181313" rx="8" stroke="#d4a359" stroke-width="1.5"/>
@@ -319,7 +316,7 @@ export class LevelSelection {
           </svg>
         `;
 
-      case 7:
+      case 5:
         return `
           <svg viewBox="0 0 100 80" class="milestone-svg">
             <rect width="100" height="80" fill="#1b1220" rx="8" stroke="#d4a359" stroke-width="1.5"/>
@@ -329,7 +326,7 @@ export class LevelSelection {
           </svg>
         `;
 
-      case 9:
+      case 7:
         return `
           <svg viewBox="0 0 100 80" class="milestone-svg">
             <rect width="100" height="80" fill="#091224" rx="8" stroke="#d4a359" stroke-width="1.5"/>
@@ -340,7 +337,7 @@ export class LevelSelection {
           </svg>
         `;
 
-      case 15:
+      case 11:
         return `
           <svg viewBox="0 0 100 80" class="milestone-svg">
             <rect width="100" height="80" fill="#0c1828" rx="8" stroke="#d4a359" stroke-width="1.5"/>
@@ -355,7 +352,7 @@ export class LevelSelection {
           <svg viewBox="0 0 100 80" class="milestone-svg">
             <rect width="100" height="80" fill="#141a24" rx="8" stroke="${borderColor}" stroke-width="1"/>
             <circle cx="50" cy="36" r="16" fill="rgba(212, 163, 89, 0.15)"/>
-            <text x="50" y="42" font-size="18" fill="#eec278" text-anchor="middle">★</text>
+            <polygon points="50,26 53,33 60,34 55,39 56,46 50,42 44,46 45,39 40,34 47,33" fill="#eec278"/>
             <text x="50" y="66" font-size="9" fill="#9aa2b4" text-anchor="middle">${name}</text>
           </svg>
         `;

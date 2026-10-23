@@ -41,7 +41,7 @@ export const SCIENTISTS: readonly ScientistDefinition[] = [
   {
     id: 'yu',
     name: '于敏',
-    after: 8,
+    after: 6,
     title: '氢弹之父',
     unlock: '氢弹',
     quote: '“一个人的名字，早晚是要没有的，能把微薄的力量融进祖国的强盛之中，便足以自慰了。”',
@@ -50,7 +50,7 @@ export const SCIENTISTS: readonly ScientistDefinition[] = [
   {
     id: 'bunker',
     name: '程开甲',
-    after: 9,
+    after: 7,
     title: '核试验司令',
     unlock: '钻地弹',
     quote: '“我这辈子最大的幸福，就是自己所做的一切都和祖国紧紧地联系在一起。”',
@@ -59,7 +59,7 @@ export const SCIENTISTS: readonly ScientistDefinition[] = [
   {
     id: 'sun',
     name: '孙家栋',
-    after: 10,
+    after: 8,
     title: '卫星之父',
     unlock: '瞄准镜',
     quote: '“国家需要，我就去做。”',
@@ -68,7 +68,7 @@ export const SCIENTISTS: readonly ScientistDefinition[] = [
   {
     id: 'stage2',
     name: '屠守锷',
-    after: 12,
+    after: 10,
     title: '洲际导弹总师',
     unlock: '二级点火+力度大增',
     pow: 35,
@@ -78,7 +78,7 @@ export const SCIENTISTS: readonly ScientistDefinition[] = [
   {
     id: 'sub',
     name: '黄纬禄',
-    after: 14,
+    after: 12,
     title: '巨浪一号总师',
     unlock: '潜射阵地',
     quote: '“有问题共同商量，有困难共同克服，有余量共同掌握，有风险共同承担。”',

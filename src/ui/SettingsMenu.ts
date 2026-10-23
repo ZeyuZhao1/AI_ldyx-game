@@ -14,7 +14,7 @@ export class SettingsMenu {
   ): void {
     container.innerHTML = `
       <div id="viewSet" class="menu-view">
-        <div class="vtitle">游戏设置</div>
+        <h2 class="vtitle">游戏设置</h2>
 
         <div class="settings-card">
           <div class="setting-item">
@@ -35,8 +35,7 @@ export class SettingsMenu {
           </div>
         </div>
 
-        <div class="tip" style="margin-top:16px;">两弹一星研学工程 · 现代化重构版 v2.0 (TypeScript + Canvas 2D)</div>
-        <button class="mbtn ghost backBtn" id="btn-settings-back">返回首页</button>
+        <button class="mbtn ghost backBtn" id="btn-settings-back">返回主页</button>
       </div>
     `;
 

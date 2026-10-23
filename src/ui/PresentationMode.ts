@@ -23,9 +23,9 @@ export class PresentationMode {
 
     container.innerHTML = `
       <div id="viewPres" class="menu-view">
-        <div class="vtitle">思政课堂汇报演示模式</div>
+        <h2 class="vtitle">历史战术自由演示模式</h2>
         <div class="tip" style="margin-bottom:20px;max-width:620px;line-height:1.6">
-          专为课堂研学与思政答辩设计的演示模式。可自由选择任意历史关卡、配置科技树预设，且<b>绝不覆盖或影响普通游玩的存档进度</b>。
+          专为演示讲解与战术推演设计的自由模式。可自由选择任意历史关卡、配置科技树预设，且<b>绝不覆盖或影响普通游玩的存档进度</b>。
         </div>
 
         <div class="pres-config-box">
@@ -53,13 +53,13 @@ export class PresentationMode {
           <div class="form-row">
             <label class="checkbox-label">
               <input type="checkbox" id="pres-infinite-ammo" />
-              <span>充裕弹药供给 (各弹种数量充裕，便于课堂多角度试射)</span>
+              <span>充裕弹药供给 (各弹种数量充裕，便于多角度试射)</span>
             </label>
           </div>
 
-          <div style="margin-top:24px;display:flex;gap:12px;justify-content:center;">
-            <button class="hbtn primary" id="btn-pres-launch" style="width:200px;font-size:18px;">进入汇报演示</button>
-            <button class="mbtn ghost" id="btn-pres-back" style="margin:0;">返回首页</button>
+          <div class="pres-actions-row">
+            <button class="mbtn primary" id="btn-pres-launch">进入演示推演</button>
+            <button class="mbtn ghost" id="btn-pres-back">返回主页</button>
           </div>
         </div>
       </div>

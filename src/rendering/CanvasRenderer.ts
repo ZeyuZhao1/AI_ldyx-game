@@ -511,8 +511,8 @@ export class CanvasRenderer {
     ctx.textAlign = 'center';
     ctx.fillText('发射阵地', L.x, gY + 24);
 
-    // Submarine (available in level 14 or when unlocked)
-    if (engine.unlockedScientists.includes('sub') || engine.levelIndex >= 13) {
+    // Submarine (available in level 11 or when unlocked)
+    if (engine.unlockedScientists.includes('sub') || engine.levelIndex >= 11) {
       ctx.fillStyle = '#1c2e3b';
       ctx.beginPath();
       ctx.ellipse(S.x, S.y + 14, 48, 14, 0, 0, 6.283);
@@ -618,12 +618,14 @@ export class CanvasRenderer {
     ctx.fillStyle = '#38bdf8';
     ctx.font = 'bold 13px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('🛰 轨道入轨窗口', orbit.x, orbit.y - orbit.r - 8);
+    ctx.fillText('轨道入轨窗口', orbit.x, orbit.y - orbit.r - 8);
     ctx.restore();
   }
 
   private drawBlock(ctx: CanvasRenderingContext2D, b: ActiveBlock, engine: GameEngine): void {
     const biome = engine.level?.biome || 'desert';
+    const cx = b.x + b.w / 2;
+    const cy = b.y + b.h / 2;
 
     if (b.type === 'concrete') {
       ctx.fillStyle = '#555d70';
@@ -663,10 +665,7 @@ export class CanvasRenderer {
         ctx.lineWidth = 2;
         ctx.strokeRect(b.x, b.y, b.w, b.h);
 
-        ctx.fillStyle = '#fbbf24';
-        ctx.font = 'bold 14px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('☢', b.x + b.w / 2, b.y + b.h / 2 + 5);
+        this.drawRadiationEmblem(ctx, cx, cy, 9, '#fbbf24');
       } else if (biome === 'space') {
         ctx.fillStyle = '#b45309';
         ctx.fillRect(b.x, b.y, b.w, b.h);
@@ -677,23 +676,17 @@ export class CanvasRenderer {
 
         ctx.fillStyle = pulse > 0.7 ? '#ef4444' : '#10b981';
         ctx.beginPath();
-        ctx.arc(b.x + b.w / 2, b.y + 8, 3.5, 0, Math.PI * 2);
+        ctx.arc(cx, b.y + 8, 3.5, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 15px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('⛯', b.x + b.w / 2, b.y + b.h / 2 + 5);
+        this.drawCrosshairTarget(ctx, cx, cy, 7, '#38bdf8');
       } else if (biome === 'ocean') {
         ctx.fillStyle = '#991b1b';
         ctx.fillRect(b.x, b.y, b.w, b.h);
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(b.x, b.y + b.h * 0.35, b.w, b.h * 0.3);
 
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 16px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('🎯', b.x + b.w / 2, b.y + b.h / 2 + 6);
+        this.drawCrosshairTarget(ctx, cx, cy, 9, '#ffffff');
       } else {
         ctx.fillStyle = '#991b1b';
         ctx.fillRect(b.x, b.y, b.w, b.h);
@@ -704,15 +697,101 @@ export class CanvasRenderer {
         ctx.strokeStyle = '#fca5a5';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.arc(b.x + b.w / 2, b.y + b.h / 2, Math.min(b.w, b.h) * 0.32, 0, Math.PI * 2);
+        ctx.arc(cx, cy, Math.min(b.w, b.h) * 0.32, 0, Math.PI * 2);
         ctx.stroke();
 
-        ctx.fillStyle = '#fef2f2';
-        ctx.font = 'bold 16px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('★', b.x + b.w / 2, b.y + b.h / 2 + 6);
+        this.drawStar(ctx, cx, cy, 5, 8, 4, '#fef2f2');
       }
     }
+  }
+
+  private drawStar(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    spikes: number,
+    outerRadius: number,
+    innerRadius: number,
+    color: string
+  ): void {
+    let rot = (Math.PI / 2) * 3;
+    let x = cx;
+    let y = cy;
+    const step = Math.PI / spikes;
+
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - outerRadius);
+    for (let i = 0; i < spikes; i++) {
+      x = cx + Math.cos(rot) * outerRadius;
+      y = cy + Math.sin(rot) * outerRadius;
+      ctx.lineTo(x, y);
+      rot += step;
+
+      x = cx + Math.cos(rot) * innerRadius;
+      y = cy + Math.sin(rot) * innerRadius;
+      ctx.lineTo(x, y);
+      rot += step;
+    }
+    ctx.lineTo(cx, cy - outerRadius);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  private drawRadiationEmblem(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    r: number,
+    color: string
+  ): void {
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.28, 0, Math.PI * 2);
+    ctx.fill();
+
+    for (let i = 0; i < 3; i++) {
+      const startAng = (i * 2 * Math.PI) / 3 - Math.PI / 6;
+      const endAng = startAng + Math.PI / 3;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, startAng, endAng);
+      ctx.arc(cx, cy, r * 0.45, endAng, startAng, true);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  private drawCrosshairTarget(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    r: number,
+    color: string
+  ): void {
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.arc(cx, cy, r * 0.45, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(cx - r * 1.3, cy);
+    ctx.lineTo(cx + r * 1.3, cy);
+    ctx.moveTo(cx, cy - r * 1.3);
+    ctx.lineTo(cx, cy + r * 1.3);
+    ctx.stroke();
+
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   }
 
   private drawDevice(ctx: CanvasRenderingContext2D, dev: DeployedDevice): void {
@@ -866,7 +945,7 @@ export class CanvasRenderer {
 
   private drawDemo(ctx: CanvasRenderingContext2D, engine: GameEngine): void {
     const demo = engine.demo;
-    if (!demo) return;
+    if (!demo || engine.isAiming) return;
 
     const D = {
       sx: GAME_CONFIG.DEMO_PULL.sx,
@@ -988,7 +1067,7 @@ export class CanvasRenderer {
   private drawTacticalPrompts(ctx: CanvasRenderingContext2D, engine: GameEngine): void {
     const W = GAME_CONFIG.WORLD_WIDTH;
     const hasQian = engine.unlockedScientists.includes('qian');
-    const isStage2Avail = engine.unlockedScientists.includes('stage2') || engine.levelIndex >= 11;
+    const isStage2Avail = engine.unlockedScientists.includes('stage2') || engine.levelIndex >= 9;
 
     if (engine.missile && hasQian && !engine.missile.glideUsed) {
       ctx.fillStyle = '#38bdf8';

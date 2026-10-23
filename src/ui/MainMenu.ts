@@ -1,3 +1,5 @@
+import { ICONS } from './Icons';
+
 export interface MainMenuCallbacks {
   onStartCareer: () => void;
   onOpenPresentation: () => void;
@@ -74,7 +76,7 @@ export class MainMenu {
               </div>
               <div class="home-title-group">
                 <h1 class="main-title">两弹一星</h1>
-                <div class="sub">国防科技功勋研学汇报</div>
+                <div class="sub">国防科技功勋历史长卷</div>
               </div>
             </div>
           </div>
@@ -87,7 +89,7 @@ export class MainMenu {
             </div>
             <span class="stat-divider">·</span>
             <div class="home-stat-item">
-              <span class="stat-num">16 项</span>
+              <span class="stat-num">12 项</span>
               <span class="stat-lbl">攻坚试验</span>
             </div>
             <span class="stat-divider">·</span>
@@ -107,17 +109,17 @@ export class MainMenu {
         <!-- Right Mode Select Buttons -->
         <div id="homeBtns">
           <button class="hbtn primary menu-action-card" id="btn-play">
-            <div class="card-btn-icon">🚀</div>
+            <div class="card-btn-icon">${ICONS.rocket('menu-btn-svg')}</div>
             <div class="card-btn-text">
               <div class="card-btn-title">历史攻关长卷</div>
-              <div class="card-btn-desc">1960–1982 研学时间轴</div>
+              <div class="card-btn-desc">1960–1982 历史突破征程</div>
             </div>
           </button>
 
           <button class="hbtn pres-btn menu-action-card" id="btn-pres">
-            <div class="card-btn-icon">🎓</div>
+            <div class="card-btn-icon">${ICONS.presentation('menu-btn-svg')}</div>
             <div class="card-btn-text">
-              <div class="card-btn-title">思政汇报演示</div>
+              <div class="card-btn-title">自由推演演示</div>
               <div class="card-btn-desc">课堂演讲自由推演</div>
             </div>
           </button>
@@ -125,7 +127,7 @@ export class MainMenu {
           ${
             isEndlessUnlocked
               ? `<button class="hbtn endless-btn menu-action-card" id="btn-endless">
-                  <div class="card-btn-icon">∞</div>
+                  <div class="card-btn-icon">${ICONS.infinity('menu-btn-svg')}</div>
                   <div class="card-btn-text">
                     <div class="card-btn-title">无尽战略演习</div>
                     <div class="card-btn-desc">极限制导防御挑战</div>
@@ -135,7 +137,7 @@ export class MainMenu {
           }
 
           <button class="hbtn menu-action-card" id="btn-sci">
-            <div class="card-btn-icon">★</div>
+            <div class="card-btn-icon">${ICONS.star('menu-btn-svg')}</div>
             <div class="card-btn-text">
               <div class="card-btn-title">功勋科学家名录</div>
               <div class="card-btn-desc">钱学森·邓稼先·于敏...</div>
@@ -143,7 +145,7 @@ export class MainMenu {
           </button>
 
           <button class="hbtn menu-action-card" id="btn-set">
-            <div class="card-btn-icon">⚙</div>
+            <div class="card-btn-icon">${ICONS.settings('menu-btn-svg')}</div>
             <div class="card-btn-text">
               <div class="card-btn-title">系统参数设置</div>
               <div class="card-btn-desc">音效与显示调节</div>

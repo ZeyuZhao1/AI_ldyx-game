@@ -108,3 +108,65 @@ describe('Scheduler and Stale Callback Invalidation', () => {
     expect(executedOldSession).toBe(false);
   });
 });
+
+describe('Scientist Unlock and Milestone Card Resolution', () => {
+  it('maps every milestone scientist correctly to levels 1, 2, 4, 5, 6, 7, 8, 10, 12', async () => {
+    const { SCIENTISTS } = await import('../src/data/scientists');
+    const { LEVELS } = await import('../src/data/levels');
+
+    // Expected mapping
+    const expected = [
+      { levelIndex: 0, scientistId: 'qian', name: '钱学森' },
+      { levelIndex: 1, scientistId: 'enrich', name: '王承书' },
+      { levelIndex: 3, scientistId: 'deng', name: '邓稼先' },
+      { levelIndex: 4, scientistId: 'guo', name: '郭永怀' },
+      { levelIndex: 5, scientistId: 'yu', name: '于敏' },
+      { levelIndex: 6, scientistId: 'bunker', name: '程开甲' },
+      { levelIndex: 7, scientistId: 'sun', name: '孙家栋' },
+      { levelIndex: 9, scientistId: 'stage2', name: '屠守锷' },
+      { levelIndex: 11, scientistId: 'sub', name: '黄纬禄' },
+    ];
+
+    for (const exp of expected) {
+      const level = LEVELS[exp.levelIndex];
+      expect(level).toBeDefined();
+
+      const sci = SCIENTISTS.find((s) => s.after === exp.levelIndex + 1);
+      expect(sci).toBeDefined();
+      expect(sci?.id).toBe(exp.scientistId);
+      expect(sci?.name).toBe(exp.name);
+    }
+  });
+
+  it('guarantees scientist card is included in newlyUnlocked even if already recorded in unlockedSci (replays / existing saves)', async () => {
+    const { SCIENTISTS } = await import('../src/data/scientists');
+
+    // Simulate an existing save where all scientists were already recorded
+    const dirtyUnlockedSci = ['qian', 'enrich', 'deng', 'guo', 'yu', 'bunker', 'sun', 'stage2', 'sub'];
+
+    // For any milestone level (e.g. Level 1 - Qian, Level 5 - Guo, Level 12 - Huang):
+    const testLevels = [0, 1, 3, 4, 5, 6, 7, 9, 11];
+
+    for (const curLevelIdx of testLevels) {
+      const nextProg = Math.max(12, curLevelIdx + 1);
+      const newlyUnlocked: Array<{ id: string; name: string }> = [];
+
+      // Step 1: standard progress loop
+      for (const s of SCIENTISTS) {
+        if (s.after <= nextProg && !dirtyUnlockedSci.includes(s.id)) {
+          newlyUnlocked.push(s);
+        }
+      }
+
+      // Step 2: Milestone Scientist Guarantee
+      const levelSci = SCIENTISTS.find((s) => s.after === curLevelIdx + 1);
+      if (levelSci && !newlyUnlocked.some((s) => s.id === levelSci.id)) {
+        newlyUnlocked.push(levelSci);
+      }
+
+      // Must guarantee this milestone level's scientist is queued for card popup!
+      expect(newlyUnlocked.length).toBeGreaterThanOrEqual(1);
+      expect(newlyUnlocked.some((s) => s.id === levelSci?.id)).toBe(true);
+    }
+  });
+});

@@ -1,6 +1,6 @@
 {
   "name": "两弹一星小游戏 (Two Bombs, One Satellite)",
-  "description": "基于真实史实改编的《两弹一星》功勋科学家与国防科技历史汇报研学小游戏，重现东风导弹、两弹结合、第一颗氢弹与东方红一号卫星发射历程。",
+  "description": "基于真实史实改编的《两弹一星》功勋科学家与国防科技历史小游戏，重现东风导弹、两弹结合、第一颗氢弹与东方红一号卫星发射历程。",
   "permissions": [],
   "capabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

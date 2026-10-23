@@ -7,9 +7,8 @@ export const LEVELS: readonly LevelDefinition[] = [
     name: '东风一号',
     wind: 0,
     biome: 'desert',
-    intro:
-      '1960年11月5日，中国第一枚近程地对地导弹“东风一号”发射成功。<br>进入关卡后请先观看一段操作演示，随后摧毁全部<span style="color:#ff7b7b">红色核心目标</span>。',
-    fact: '“东风一号”打破了帝国主义对新中国的导弹封锁，点燃了共和国导弹事业的第一把火。',
+    intro: '新中国第一枚地地导弹发射。拖拽拉弓，摧毁前方全部红色核心目标。',
+    fact: '“东风一号”打破帝国主义封锁，点燃了共和国导弹事业的第一把火。',
     warheads: { normal: 4, atomic: 0, hydro: 0, deploy: 0 },
     blocks: [
       [430, 442, 90, 40, 'concrete'],
@@ -23,12 +22,11 @@ export const LEVELS: readonly LevelDefinition[] = [
   {
     id: 'lvl_1964_enrich',
     year: '1964.01',
-    name: '铀浓缩',
+    name: '铀浓缩突破',
     wind: 6,
     biome: 'industrial',
-    intro:
-      '1964年1月，兰州铀浓缩厂首次产出武器级高浓铀——原子弹终于有了自己的“粮食”。<br>摧毁分离厂房的核心机组。',
-    fact: '铀-235在天然铀中仅占0.7%，提纯到90%以上需要数千台气体扩散机级联昼夜运转。',
+    intro: '兰州铀浓缩厂产出高浓铀，突破核原料关。借助顺风摧毁分离厂房核心机组。',
+    fact: '王承书等专家隐姓埋名三十年，数千台离心扩散机昼夜运转产出合格高浓铀。',
     warheads: { normal: 4, atomic: 0, hydro: 0, deploy: 0 },
     blocks: [
       [600, 442, 150, 40, 'concrete'],
@@ -46,9 +44,8 @@ export const LEVELS: readonly LevelDefinition[] = [
     name: '东风二号',
     wind: -10,
     biome: 'desert',
-    intro:
-      '1962年3月首飞失利后，科研人员百折不挠，1964年6月29日，完全自主设计的东风二号终于成功升空。<br>目标在<span style="color:#ff9b6b">纵深阵地</span>，远处核心要借助【钱学森弹道】滑翔增程。',
-    fact: '东风二号射程达1300公里。钱学森说：“科学试验如果次次都能成功，那又何必试验呢？”',
+    intro: '中程导弹完全自主研制成功。飞行中轻触屏幕激活【钱学森弹道】滑翔增程。',
+    fact: '东风二号射程达1300公里，开启了我国导弹独立自主创新之路。',
     warheads: { normal: 3, atomic: 0, hydro: 0, deploy: 0 },
     blocks: [
       [760, 382, 30, 100, 'steel'],
@@ -61,12 +58,11 @@ export const LEVELS: readonly LevelDefinition[] = [
   {
     id: 'lvl_1964_lopnur',
     year: '1964.10',
-    name: '罗布泊',
+    name: '第一颗原子弹',
     wind: 0,
     biome: 'desert',
-    intro:
-      '1964年10月16日15时，罗布泊戈壁滩，中国第一颗原子弹在102米高的铁塔上轰然起爆。<br>本关新增<span style="color:#ff9b4d">定点试爆</span>：点击【部署核装置】把它架到目标旁，再按【起爆】。',
-    fact: '原子弹研制代号“596”——以此铭记1959年6月苏联单方面撕毁协议拒绝提供技术援助的时刻。',
+    intro: '罗布泊铁塔巨响震惊世界。点击【装置】定点架设，再按【起爆】引发殉爆。',
+    fact: '中国第一颗原子弹爆炸成功，五星红旗在罗布泊荒原冉冉升起。',
     warheads: { normal: 2, atomic: 0, hydro: 0, deploy: 1 },
     blocks: [
       [630, 442, 170, 40, 'steel'],
@@ -79,35 +75,15 @@ export const LEVELS: readonly LevelDefinition[] = [
     ],
   },
   {
-    id: 'lvl_1965_airdrop',
-    year: '1965.05',
-    name: '空投核弹',
-    wind: 8,
-    biome: 'plateau',
-    intro:
-      '1965年5月14日，第二颗原子弹由图-16轰炸机空投实爆成功——核武器真正迈向“武器化实战化”。<br>面对三处分散目标，合理规划核装置的部署位置与链式殉爆。',
-    fact: '空投试验成功证明中国核武器不仅能在地面铁塔静态试爆，更已具备可靠的空中投送打击能力。',
-    warheads: { normal: 2, atomic: 0, hydro: 0, deploy: 1 },
-    blocks: [
-      [560, 442, 70, 40, 'concrete'],
-      [575, 402, 40, 40, 'core'],
-      [700, 442, 70, 40, 'steel'],
-      [715, 402, 40, 40, 'core'],
-      [840, 442, 70, 40, 'steel'],
-      [855, 402, 40, 40, 'core'],
-    ],
-  },
-  {
     id: 'lvl_1966_twobombs',
     year: '1966.10',
     name: '两弹结合',
     wind: 12,
     biome: 'plateau',
     milestoneId: 'atomic',
-    intro:
-      '1966年10月27日，东风二号甲携带核弹头腾空而起并实爆成功——原子弹第一次真正与导弹结合！<br>从此【原子弹弹头】正式列装武器库：命中即爆，精准威慑。',
-    fact: '“两弹结合”在本国本土发射、本土落爆，冒着极高政治军事风险，在世界核试验史上绝无仅有。',
-    milestone: '【原子弹弹头】已解锁：与定点试爆不同，它可以随导弹精确远程机动投送。',
+    intro: '原子弹装上导弹实弹发射。列装【原子弹弹头】，命中即产生大范围核爆。',
+    fact: '在本土起飞、本土落爆，冒着极高风险一举跃入核常兼备战略威慑时代。',
+    milestone: '【原子弹弹头】列装：具备大范围毁灭性冲击波。',
     warheads: { normal: 1, atomic: 2, hydro: 0, deploy: 0 },
     blocks: [
       [700, 340, 44, 142, 'steel'],
@@ -120,33 +96,13 @@ export const LEVELS: readonly LevelDefinition[] = [
     ],
   },
   {
-    id: 'lvl_1966_hprinciple',
-    year: '1966.12',
-    name: '氢弹原理试验',
-    wind: -14,
-    biome: 'plateau',
-    intro:
-      '1966年12月28日，氢弹原理试验圆满成功——独创的“于敏构型”得到了铁证般的实证检验。<br>战术组合拳：利用核装置压制一侧，原子弹弹头精准点杀另一侧。',
-    fact: '这次原理试验确认了中国独立自主的氢弹理论路线，为半年后全当量氢弹空爆奠定了坚实基石。',
-    warheads: { normal: 1, atomic: 1, hydro: 0, deploy: 1 },
-    blocks: [
-      [600, 442, 120, 40, 'steel'],
-      [615, 402, 40, 40, 'core'],
-      [665, 402, 40, 40, 'core'],
-      [790, 442, 120, 40, 'steel'],
-      [805, 402, 40, 40, 'core'],
-      [855, 402, 40, 40, 'core'],
-    ],
-  },
-  {
     id: 'lvl_1967_hbomb',
     year: '1967.06',
-    name: '氢弹',
-    wind: -16,
-    biome: 'space',
-    intro:
-      '1967年6月17日，中国第一颗氢弹空爆成功，爆炸当量达330万吨TNT。<br>动用<span style="color:#ffb3ff">于敏构型·氢弹</span>，展现超大范围绝对冲击力。',
-    fact: '从第一颗原子弹到第一颗氢弹，美国耗时7年3个月，苏联4年，英国4年7个月，而中国仅用了2年8个月！',
+    name: '第一颗氢弹',
+    wind: -14,
+    biome: 'plateau',
+    intro: '独创“于敏构型”，330万吨当量空爆。发射【于敏构型·氢弹】超广域清障。',
+    fact: '从原子弹到氢弹仅耗时2年8个月，创造了世界核武器发展史上的中国奇迹。',
     warheads: { normal: 1, atomic: 1, hydro: 1, deploy: 0 },
     blocks: [
       [560, 442, 70, 40, 'concrete'],
@@ -165,9 +121,8 @@ export const LEVELS: readonly LevelDefinition[] = [
     name: '地下核试验',
     wind: -8,
     biome: 'desert',
-    intro:
-      '1969年9月23日，中国首次地下核试验取得圆满成功——把惊雷深藏于山体岩层深处。<br>目标深藏于<span style="color:#c9a86a">双层厚重钢壁</span>后：新弹药【钻地弹】可连续贯穿2个掩体后起爆。',
-    fact: '地下核试验将核辐射与冲击波牢牢封闭在深山平洞与竖井中，既安全环保，又能获得极高精度的物理测试参数。',
+    intro: '雷霆深藏于山体岩层。换装【钻地弹】，连续击穿2层钢壁摧毁深埋目标。',
+    fact: '首次地下平洞核试验圆满成功，将核爆牢牢封闭于深山，数据精准、生态安全。',
     warheads: { normal: 1, atomic: 0, hydro: 0, bunker: 3, deploy: 0 },
     blocks: [
       [680, 442, 24, 40, 'steel'],
@@ -184,13 +139,12 @@ export const LEVELS: readonly LevelDefinition[] = [
   {
     id: 'lvl_1970_dfh1',
     year: '1970.04',
-    name: '东方红',
+    name: '东方红一号',
     wind: 18,
     biome: 'space',
     orbit: { x: 730, y: 150, r: 46 },
-    intro:
-      '1970年4月24日，“长征一号”运载火箭成功将“东方红一号”卫星送入苍穹，《东方红》乐曲响彻寰宇。<br>让导弹<span style="color:#8be0ff">精准穿过太空轨道窗口</span>！本关之后，孙家栋将为你解锁瞄准镜。',
-    fact: '“东方红一号”质量达173千克，超过了前四个国家首颗卫星重量的总和，宣告中国昂首跨入航天时代！',
+    intro: '长征一号将首颗卫星送入苍穹。导弹需精准穿过太空轨道窗口，乐曲响彻寰宇。',
+    fact: '《东方红》乐曲响彻太空，宣告中国昂首跨入航天大国行列。',
     warheads: { normal: 3, atomic: 0, hydro: 0, deploy: 0 },
     blocks: [
       [600, 300, 40, 182, 'steel'],
@@ -205,9 +159,8 @@ export const LEVELS: readonly LevelDefinition[] = [
     name: '返回式卫星',
     wind: 10,
     biome: 'space',
-    intro:
-      '1975年11月26日，返回式遥感卫星发射成功，并按预定计划精准回收——中国成为全球第三个掌握卫星回收技术的航天强国。<br>瞄准镜已就位：精确摧毁三处分散的回收信标。',
-    fact: '卫星在轨运行3天后，返回舱携带珍贵的高分辨率航天胶片准确着陆于贵州预定回收区。',
+    intro: '卫星按计划精准回收。孙家栋雷达瞄准镜已就位，预测完整弹道摧毁目标。',
+    fact: '中国成为全球第三个掌握返回式卫星技术的国家，开启空天遥感纪元。',
     warheads: { normal: 3, atomic: 0, hydro: 0, deploy: 0 },
     blocks: [
       [600, 442, 40, 40, 'concrete'],
@@ -224,9 +177,8 @@ export const LEVELS: readonly LevelDefinition[] = [
     name: '东风五号',
     wind: 20,
     biome: 'ocean',
-    intro:
-      '1980年5月18日，东风五号洲际导弹全程飞行试验取得圆满成功，飞跃9000余公里命中南太平洋预定海域。<br>目标位于<span style="color:#ff9b6b">极远纵深</span>：先启动【钱学森弹道】滑翔，再按一次空格实施<span style="color:#ffb366">【二级点火】</span>！',
-    fact: '海军远航打捞数据舱仅耗时5分20秒。这一刻，中国的战略核威慑力量真正具备了全球覆盖能力。',
+    intro: '洲际导弹飞跃万里南太平洋。先启动滑翔，再轻触屏幕实施【二级点火】冲刺！',
+    fact: '战略核力量具备全球覆盖能力，特混舰队5分钟内完成数据舱打捞。',
     warheads: { normal: 3, atomic: 1, hydro: 0, deploy: 0 },
     blocks: [
       [760, 322, 30, 160, 'steel'],
@@ -242,9 +194,8 @@ export const LEVELS: readonly LevelDefinition[] = [
     name: '一箭三星',
     wind: -12,
     biome: 'space',
-    intro:
-      '1981年9月20日，“风暴一号”运载火箭成功将三颗空间物理探测卫星同时送入预定轨道——中国掌握一箭多星技术。<br>三处目标错落布防，借助瞄准镜与钻地弹逐一破解。',
-    fact: '一箭三星标志着中国完全掌握了多星分离、轨道精确分配器与复合热控技术，航天发射迈向集群化。',
+    intro: '风暴一号一次将三颗卫星送入轨道。借助雷达瞄准与钻地弹，逐一突破掩体。',
+    fact: '掌握一箭多星分离与多星部署技术，中国航天发射迈向集群化。',
     warheads: { normal: 2, atomic: 1, hydro: 0, bunker: 1, deploy: 0 },
     blocks: [
       [580, 442, 70, 40, 'concrete'],
@@ -262,9 +213,8 @@ export const LEVELS: readonly LevelDefinition[] = [
     name: '巨浪一号',
     wind: -16,
     biome: 'ocean',
-    intro:
-      '1982年10月12日，巨浪一号固体潜地导弹从水下核潜艇发射成功穿云破雾——共和国拥有了完全可靠的二次核反击力量。<br>解锁<span style="color:#7ec8e3">【潜射阵地】</span>：点击HUD【阵地】切换，潜艇潜行至阵地中间，可向<span style="color:#7ec8e3">左右双向出水点火</span>！（出水初速低28%）。',
-    fact: '导弹从水下数十米冷发射点火出水，突破了水下高速姿态稳定、出水点火冲击等世界顶级航天难题。',
+    intro: '水下核潜艇发射巨浪出水。点击【阵地】切换潜射，潜艇前出左右双向打击！',
+    fact: '巨浪一号潜射圆满成功，共和国从此铸就坚不可摧的二次核反击水下长城。',
     warheads: { normal: 2, atomic: 1, hydro: 0, bunker: 1, deploy: 0 },
     blocks: [
       [500, 442, 60, 40, 'concrete'],

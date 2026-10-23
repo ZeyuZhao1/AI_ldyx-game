@@ -18,7 +18,10 @@ export class SaveManager {
 
   public saveProgress(progress: number, unlockedScientists: string[]): void {
     const validProgress = Math.max(this.memoryCache.progress, Math.min(14, Math.max(0, progress)));
-    const uniqueSci = Array.from(new Set([...this.memoryCache.unlockedScientists, ...unlockedScientists]));
+    const merged = new Set([...this.memoryCache.unlockedScientists, ...unlockedScientists]);
+    if (merged.has('sun')) merged.add('scope');
+    if (merged.has('scope')) merged.add('sun');
+    const uniqueSci = Array.from(merged);
 
     this.memoryCache = {
       ...this.memoryCache,
@@ -103,10 +106,15 @@ export class SaveManager {
       if (rawV2) {
         const parsed = JSON.parse(rawV2);
         if (parsed && parsed.version === 2) {
+          const rawSci = Array.isArray(parsed.unlockedScientists) ? parsed.unlockedScientists.filter((id: unknown) => typeof id === 'string') : [];
+          const sciSet = new Set<string>(rawSci);
+          if (sciSet.has('sun')) sciSet.add('scope');
+          if (sciSet.has('scope')) sciSet.add('sun');
+
           return {
             version: 2,
             progress: typeof parsed.progress === 'number' ? Math.max(0, Math.min(14, parsed.progress)) : 0,
-            unlockedScientists: Array.isArray(parsed.unlockedScientists) ? parsed.unlockedScientists.filter((id: unknown) => typeof id === 'string') : [],
+            unlockedScientists: Array.from(sciSet),
             soundEnabled: typeof parsed.soundEnabled === 'boolean' ? parsed.soundEnabled : true,
             reducedMotion: typeof parsed.reducedMotion === 'boolean' ? parsed.reducedMotion : false,
             highScoreEndless: typeof parsed.highScoreEndless === 'number' ? parsed.highScoreEndless : 0,
@@ -124,11 +132,14 @@ export class SaveManager {
         const legacyProgress = legacyProgressRaw ? parseInt(legacyProgressRaw, 10) : 0;
         const legacySci = legacySciRaw ? legacySciRaw.split(',').filter(Boolean) : [];
         const soundEnabled = legacySoundRaw !== null ? legacySoundRaw === 'true' : true;
+        const sciSet = new Set<string>(legacySci);
+        if (sciSet.has('sun')) sciSet.add('scope');
+        if (sciSet.has('scope')) sciSet.add('sun');
 
         const migrated: SaveDataV2 = {
           version: 2,
           progress: isNaN(legacyProgress) ? 0 : Math.max(0, Math.min(14, legacyProgress)),
-          unlockedScientists: legacySci,
+          unlockedScientists: Array.from(sciSet),
           soundEnabled,
           reducedMotion: false,
           highScoreEndless: 0,

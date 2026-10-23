@@ -1,5 +1,7 @@
 import { WARHEAD_CONFIGS } from '../data/gameConfig';
-import { LevelDefinition, ResultState, WarheadType } from '../types/game';
+import { LevelDefinition, ResultState, ScientistDefinition, WarheadType } from '../types/game';
+import { ICONS } from './Icons';
+import { renderScientistPortraitHtml } from './ScientistPortraits';
 
 export class DialogManager {
   private container: HTMLElement;
@@ -52,64 +54,62 @@ export class DialogManager {
   ): void {
     const warheadOrder: WarheadType[] = ['normal', 'atomic', 'hydro', 'bunker', 'deploy'];
     const warheadIcons: Record<WarheadType, string> = {
-      normal: '🚀',
-      atomic: '☢',
-      hydro: '⚛',
-      bunker: '⚡',
-      deploy: '📦',
+      normal: ICONS.rocket('warhead-sym-svg'),
+      atomic: ICONS.atomic('warhead-sym-svg'),
+      hydro: ICONS.hydro('warhead-sym-svg'),
+      bunker: ICONS.bunker('warhead-sym-svg'),
+      deploy: ICONS.deploy('warhead-sym-svg'),
     };
 
-    let arsenalItemsHtml = '';
+    let arsenalBadgesHtml = '';
     for (const key of warheadOrder) {
       const count = level.warheads[key] || 0;
       if (count > 0) {
         const cfg = WARHEAD_CONFIGS[key];
-        arsenalItemsHtml += `
-          <div class="modal-arsenal-item">
-            <span class="a-icon">${warheadIcons[key]}</span>
-            <span class="a-name">${cfg.name}</span>
-            <span class="a-count">×${count}枚</span>
-            <span class="a-desc">${cfg.description}</span>
-          </div>
+        arsenalBadgesHtml += `
+          <span class="intro-ammo-chip" title="${cfg.description}">
+            <span class="chip-sym">${warheadIcons[key]}</span>
+            <span class="chip-name">${cfg.name}</span>
+            <span class="chip-count">×${count}</span>
+          </span>
         `;
       }
     }
 
-    // Special perks summary
+    // Special perks summary (concise vector icons)
     const perks: string[] = [];
     if (unlockedScientists.includes('qian')) {
-      perks.push('★ 【钱学森弹道】中途轻触屏幕激活高超音速滑翔增程');
+      perks.push(`${ICONS.glide('hud-icon-xs inline-icon')} 钱学森弹道 (飞行中轻触滑翔)`);
     }
     if (hasAimScope || unlockedScientists.includes('sun') || unlockedScientists.includes('scope')) {
-      perks.push('★ 【孙家栋雷达】瞄准镜已就位，发射前清晰预测完整飞行弹道');
+      perks.push(`${ICONS.radar('hud-icon-xs inline-icon')} 孙家栋雷达 (预测瞄准线)`);
     }
     if (unlockedScientists.includes('guo')) {
-      perks.push('★ 【郭永怀数据护盾】首发若脱靶自动回收该枚弹药');
+      perks.push(`${ICONS.shield('hud-icon-xs inline-icon')} 郭永怀护盾 (首发脱靶回收)`);
     }
     if (unlockedScientists.includes('sub') || level.biome === 'ocean') {
-      perks.push('★ 【巨浪潜射阵地】潜艇水下前出，可向双向发射');
+      perks.push(`${ICONS.submarine('hud-icon-xs inline-icon')} 潜射阵地 (可切换潜艇水下发射)`);
     }
 
     const perksHtml = perks.length > 0
-      ? `<div class="modal-special-perk">${perks.join(' · ')}</div>`
+      ? `<div class="intro-perks-row">${perks.join(' · ')}</div>`
       : '';
 
     const html = `
       <h2>${level.year} · ${level.name}</h2>
-      <div class="level-intro-text">${level.intro}</div>
+      <div class="level-intro-brief">${level.intro}</div>
 
-      <!-- Detailed Weapon Equipment Briefing -->
-      <div class="modal-arsenal-box">
-        <div class="modal-arsenal-title">【本关战备武器与装备配置】</div>
-        <div class="modal-arsenal-list">
-          ${arsenalItemsHtml}
+      <div class="intro-tactical-shelf">
+        <div class="intro-shelf-label">【本关弹药配置】</div>
+        <div class="intro-chips-wrap">
+          ${arsenalBadgesHtml}
         </div>
         ${perksHtml}
       </div>
 
       <div class="modal-buttons">
         <button class="mbtn" id="btn-modal-start">开始试验</button>
-        <button class="mbtn ghost" id="btn-modal-back">返回关卡</button>
+        <button class="mbtn ghost" id="btn-modal-back">返回</button>
       </div>
     `;
 
@@ -122,6 +122,98 @@ export class DialogManager {
     document.getElementById('btn-modal-back')?.addEventListener('click', () => {
       this.hideModal();
       onBack();
+    });
+  }
+
+  /**
+   * Collectible Character Card Unlock Modal (集卡抽卡式功勋人物卡)
+   * Displays realistic portrait with spinner, patriotic quote, unlocked capabilities, and smooth fade-out "归队" button
+   */
+  public showScientistUnlockCard(
+    scientist: ScientistDefinition,
+    onDismiss: () => void,
+    options?: {
+      fact?: string;
+      levelNumber?: number;
+      continueHint?: string;
+      onHome?: () => void;
+    }
+  ): void {
+    const portraitHtml = renderScientistPortraitHtml(scientist.id, scientist.name, { size: 'card' });
+    const factHtml = options?.fact ? `<div class="gacha-level-fact">“${options.fact}”</div>` : '';
+    const homeBtnHtml = options?.onHome
+      ? `<button class="mbtn ghost btn-return-home" id="btn-sci-home">返回主页</button>`
+      : '';
+    const hintText = options?.continueHint || '点击【归队】即刻继续下一攻坚阶段';
+
+    const html = `
+      <div class="gacha-card-wrapper" id="gacha-card-wrap">
+        <div class="gacha-glory-header">
+          <div class="gacha-glory-tag">${ICONS.star('gacha-star-icon')} 共和国两弹一星功勋元勋 ${ICONS.star('gacha-star-icon')}</div>
+          <h2 class="gacha-glory-title">功勋科学家荣耀归队</h2>
+          ${factHtml}
+        </div>
+
+        <div class="gacha-card-entity">
+          <div class="gacha-portrait-frame">
+            ${portraitHtml}
+            <div class="gacha-portrait-glow"></div>
+          </div>
+
+          <div class="gacha-info-panel">
+            <div class="gacha-name-group">
+              <span class="gacha-name">${scientist.name}</span>
+              <span class="gacha-title-badge">${scientist.title}</span>
+            </div>
+
+            <div class="gacha-quote-bubble">
+              ${scientist.quote.trim().startsWith('“') ? scientist.quote : `“${scientist.quote}”`}
+            </div>
+
+            <div class="gacha-tactical-block">
+              <div class="gacha-tactical-badge">
+                ${ICONS.rocket('gacha-tac-icon')} 解锁战术能力：${scientist.unlock}
+              </div>
+              <div class="gacha-tactical-desc">
+                ${scientist.desc}
+              </div>
+              ${scientist.pow ? `<div class="gacha-power-badge">发射架倾力加成：最大力度 +${scientist.pow}</div>` : ''}
+            </div>
+          </div>
+        </div>
+
+        <div class="gacha-actions-row">
+          <button class="mbtn primary btn-return-team" id="btn-sci-return">
+            归队
+          </button>
+          ${homeBtnHtml}
+        </div>
+        <div class="gacha-return-hint">${hintText}</div>
+      </div>
+    `;
+
+    this.showModal(html);
+
+    const btnReturn = document.getElementById('btn-sci-return');
+    const btnHome = document.getElementById('btn-sci-home');
+    const wrap = document.getElementById('gacha-card-wrap');
+
+    btnReturn?.focus();
+
+    btnReturn?.addEventListener('click', () => {
+      wrap?.classList.add('fade-out-scale');
+      window.setTimeout(() => {
+        this.hideModal();
+        onDismiss();
+      }, 320);
+    });
+
+    btnHome?.addEventListener('click', () => {
+      wrap?.classList.add('fade-out-scale');
+      window.setTimeout(() => {
+        this.hideModal();
+        options?.onHome?.();
+      }, 320);
     });
   }
 
@@ -142,8 +234,8 @@ export class DialogManager {
           result.newScientist
             ? `
           <div class="scientist-unlock-box">
-            <div class="sci-name">★ 功勋科学家归队：${result.newScientist.name} · ${result.newScientist.title}</div>
-            <div class="quote">${result.newScientist.quote}</div>
+            <div class="sci-name">${ICONS.star('sci-star-icon')} 功勋科学家归队：${result.newScientist.name} · ${result.newScientist.title}</div>
+            <div class="quote">${result.newScientist.quote.trim().startsWith('“') ? result.newScientist.quote : `“${result.newScientist.quote}”`}</div>
             <div class="sci-desc">${result.newScientist.desc}</div>
           </div>
         `
@@ -152,10 +244,9 @@ export class DialogManager {
         <div class="modal-buttons">
           ${
             result.hasNextLevel
-              ? '<button class="mbtn" id="btn-modal-next">下一关</button>'
-              : '<button class="mbtn" id="btn-modal-home">通关全篇 · 返回首页</button>'
+              ? '<button class="mbtn" id="btn-modal-next">下一关</button><button class="mbtn ghost" id="btn-modal-home-ghost">返回主页</button>'
+              : '<button class="mbtn" id="btn-modal-home">通关全篇 · 返回主页</button>'
           }
-          <button class="mbtn ghost" id="btn-modal-home-ghost">首页</button>
         </div>
       `;
     } else if (result.outcome === 'orbit_win') {
@@ -166,8 +257,8 @@ export class DialogManager {
           result.newScientist
             ? `
           <div class="scientist-unlock-box">
-            <div class="sci-name">★ 功勋科学家归队：${result.newScientist.name} · ${result.newScientist.title}</div>
-            <div class="quote">${result.newScientist.quote}</div>
+            <div class="sci-name">${ICONS.star('sci-star-icon')} 功勋科学家归队：${result.newScientist.name} · ${result.newScientist.title}</div>
+            <div class="quote">${result.newScientist.quote.trim().startsWith('“') ? result.newScientist.quote : `“${result.newScientist.quote}”`}</div>
             <div class="sci-desc">${result.newScientist.desc}</div>
           </div>
         `
@@ -179,7 +270,7 @@ export class DialogManager {
         </div>
         <div class="modal-buttons">
           <button class="mbtn" id="btn-modal-next">下一关</button>
-          <button class="mbtn ghost" id="btn-modal-home-ghost">首页</button>
+          <button class="mbtn ghost" id="btn-modal-home-ghost">返回主页</button>
         </div>
       `;
     } else if (result.outcome === 'lose') {
@@ -188,7 +279,7 @@ export class DialogManager {
         <p>弹药耗尽，仍有目标未被摧毁。<br>戈壁滩上，千锤百炼方得真功 —— 调整发射仰角与拉弓力度，再次试验！</p>
         <div class="modal-buttons">
           <button class="mbtn" id="btn-modal-retry">再试一次</button>
-          <button class="mbtn ghost" id="btn-modal-home-ghost">返回首页</button>
+          <button class="mbtn ghost" id="btn-modal-home-ghost">返回主页</button>
         </div>
       `;
     } else if (result.outcome === 'endless_over') {
@@ -197,7 +288,7 @@ export class DialogManager {
         <p>你坚持到了第 <b style="color:#eec278;font-size:18px">${result.endlessStats?.wave || 1}</b> 波，共摧毁核心 <b style="color:#eec278;font-size:18px">${result.endlessStats?.score || 0}</b> 处。<br>戈壁无言，星辰为证 —— 再发起一次战术冲击？</p>
         <div class="modal-buttons">
           <button class="mbtn" id="btn-modal-retry">再来一次</button>
-          <button class="mbtn ghost" id="btn-modal-home-ghost">返回首页</button>
+          <button class="mbtn ghost" id="btn-modal-home-ghost">返回主页</button>
         </div>
       `;
     }
